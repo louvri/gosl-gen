@@ -1,0 +1,289 @@
+{{- $packageName := toLower .Table.Name }}
+package {{$packageName}} 
+
+import (
+    "context"
+	"errors"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
+	sql "github.com/louvri/gosl"
+    key "$KEY_PATH"
+	"github.com/louvri/gob/arr"
+	_sql "database/sql"
+	base "$REPOSITORY_PATH"
+    db "$MODEL_PATH/{{$packageName}}"
+	"github.com/louvri/gosl/transformer"
+	helper "github.com/louvri/gosl/builder"
+)
+
+type repository struct {
+	logger log.Logger
+}
+
+func New(logger log.Logger) base.Repository {
+	return &repository{
+		logger: logger,
+	}
+}
+
+func (i *repository) Get(ctx context.Context, param helper.QueryParams, priorities []string ,trans ...transformer.Transformer) (interface{},error) {
+	if len (trans) > 0 {
+		return i.Query(ctx,[]helper.QueryParams{param},priorities,trans[0])
+	} 
+	return i.Query(ctx,[]helper.QueryParams{param},priorities)
+}
+
+func (i *repository) All(ctx context.Context, param helper.QueryParams, priorities []string , trans ...transformer.Transformer) (interface{},error) {
+	if len(trans) > 0 {
+		return i.Query(ctx,[]helper.QueryParams{param},priorities,trans[0])
+	}
+	return i.Query(ctx,[]helper.QueryParams{param},priorities,trans...)
+}
+
+func (i *repository) Set(ctx context.Context, model interface{}) (int64,error) {
+	return i.Upsert(ctx,model)
+}
+
+func (i *repository) Query(ctx context.Context, params []helper.QueryParams, priorities []string, trans ...transformer.Transformer) (interface{},error) {
+	var err error
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err = errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+		return nil,err
+	}
+	operation := helper.Identifier
+	var key string 
+	if len(params) > 0 && params[0].Merge != nil  && params[0].Merge.Track != "" {
+		key = params[0].Merge.Track
+		operation = params[0].Merge.Operation
+	} else {
+		{{- $primary_key := ""}}
+		{{- range .Table.PrimaryKeys }}
+			{{- $primary_key = .Name}}
+		{{- end}}
+		key = "{{- $primary_key }}"
+	}
+	response := make([]db.Model,0)
+	queryable := ref.(*sql.Queryable)
+	shouldMerge := len(params) > 1
+	tracks := make([]interface{}, 0)
+	for _, param := range params {
+		normalize(&param)
+		indexedfilter := arr.Index(param.ColumnFilter)
+		var query helper.Builder
+		query = buildQuery(param,key,operation,tracks,priorities)
+		if param.IsDistinct {
+			query = query.Select("DISTINCT " + buildSelection(indexedfilter))
+		} else {
+			query = query.Select(buildSelection(indexedfilter))
+		}
+		stmt, values := query.Build()
+		rows, err := queryable.DB().QueryContext(ctx, stmt, values...)
+		if err != nil && err != _sql.ErrNoRows {
+			return nil,err
+		}
+		defer rows.Close()
+		for rows.Next(){
+			result, err := scan(rows, indexedfilter)
+			if err != nil && err != _sql.ErrNoRows {
+				return nil, err
+			}
+		
+			if result != nil {
+				if shouldMerge {
+					tracks  = track(tracks,*result,key)
+				}
+				var out interface{}
+				out = *result
+				if len(trans) > 0 {
+					if trans[0].Transform != nil {
+						out, err = trans[0].Transform(*result)
+						if err != nil {
+							return nil,err
+						}
+					}
+					if trans[0].Store != nil {
+						err = trans[0].Store(out)
+						if err != nil {
+							return nil,err
+						}
+					}
+				} else {
+					response = append(response,*result)
+				}
+			}
+		}
+		if operation == helper.Statement {
+			tracks = append(tracks, query)
+		}
+	}
+	return response,nil
+}
+
+func (i *repository) Count(ctx context.Context, params []helper.QueryParams, priorities []string) (total int, err error) {
+	{{- $db_primary_key := "" }}
+	{{- range .Table.PrimaryKeys }}
+		{{- $db_primary_key = .Name}}
+	{{- end}}
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err = errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
+		return -1, err
+	}
+	var key string 
+	if len(params) > 0 && params[0].Merge != nil  && params[0].Merge.Track != "" {
+		key = params[0].Merge.Track
+	} else {
+		key = "{{- $db_primary_key }}"
+	}
+	queryable := ref.(*sql.Queryable)
+	tracks := make([]interface{}, 0)
+	total = 0
+	for _, param := range params {
+		normalize(&param)
+		param.Merge = &helper.Merge{
+			Operation: helper.Statement,
+		}
+		var query helper.Builder
+		query = buildQuery(param,key,helper.Statement,tracks,priorities,false)
+		if param.IsDistinct {
+			query = query.Select("DISTINCT COUNT({{- $db_primary_key}}) as total")
+		} else {
+			query = query.Select("COUNT({{- $db_primary_key}}) as total")
+		}
+		stmt, values := query.Build()
+		row :=  queryable.DB().QueryRowContext(ctx, stmt, values...)
+		var count int
+		err = row.Scan(&count)
+		if err != nil && err != _sql.ErrNoRows {
+			return -1, err
+		}
+		tracks = append(tracks, query)
+		total += count
+	}
+	return total, nil
+}
+
+//insert: insert data with default value, use map to include nil value
+func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error) {
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err := errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
+		return -1,err
+	}
+	queryable := ref.(*sql.Queryable)
+	q := helper.New()
+	q = q.From("`{{- $packageName}}`")
+	var data map[string]interface{}
+	normalizedData := make(map[string]interface{})
+	if tmp, ok := model.(db.Model) ; ok {
+		data = tmp.ToMap(nil,true)
+	} else if tmp,ok := model.(map[string]interface{}); ok {
+		data = tmp
+	}
+	for key, value := range data {
+		normalizedData[helper.ResolveColumnName(key)] = value
+	}
+	q = q.Insert(normalizedData)
+	query, values := q.Build()
+	rows, err := queryable.ExecContext(ctx, query, values...)
+	if err != nil {
+		return -1, err
+	}
+	return rows.LastInsertId()
+}
+
+//update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
+func (i *repository) Update(ctx context.Context, model interface{}, params helper.QueryParams, priorities []string) error {
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err := errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
+		return err
+	}
+	queryable := ref.(*sql.Queryable)
+	q := helper.New()
+	q = q.From("`{{- $packageName}}`")
+	var data map[string]interface{}
+	normalizedData := make(map[string]interface{})
+	if tmp, ok := model.(db.Model) ; ok {
+		data = tmp.ToMap(nil)
+	} else if tmp,ok := model.(map[string]interface{}); ok {
+		data = tmp
+	}
+	for key, value := range data {
+		normalizedData[helper.ResolveColumnName(key)] = value
+	}
+	q = q.Update(normalizedData)
+	q = buildStatement(q, params, priorities)
+	query, values := q.Build()
+	result, err := queryable.ExecContext(ctx, query, values...)
+    if err != nil {
+        return err
+    }
+    if rowAffected, err := result.RowsAffected();  rowAffected < 1 {
+        return errors.New("no_changes")
+    } else if err != nil  {
+		return err
+	}
+	return nil
+}
+
+//upsert : update or insert method that ignore any nil or empty value, use map to include nil value
+func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error) {
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err := errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
+		return -1,err
+	}
+	queryable := ref.(*sql.Queryable)
+	q := helper.New()
+	q = q.From("`{{- $packageName}}`")
+	var data map[string]interface{}
+	normalizedData := make(map[string]interface{})
+	if tmp, ok := model.(db.Model) ; ok {
+		data = tmp.ToMap(nil)
+	} else if tmp,ok := model.(map[string]interface{}); ok {
+		data = tmp
+	}
+	for key, value := range data {
+		normalizedData[helper.ResolveColumnName(key)] = value
+	}
+	q = q.Upsert(normalizedData)
+	query, values := q.Build()
+	rows, err := queryable.ExecContext(ctx, query, values...)
+	if err != nil {
+		return -1, err
+	}
+	 if rowAffected, err := rows.RowsAffected();  rowAffected < 1 {
+        return -1,errors.New("no_changes")
+    } else if err != nil  {
+		return -1,err
+	}
+	return rows.LastInsertId()
+}
+//delete : delete method
+func (i *repository) Delete(ctx context.Context, params helper.QueryParams, priorities ...string) error {
+	ref := ctx.Value(key.SQL_KEY)
+	if ref == nil {
+		err := errors.New("database is not initialized")
+		level.Error(i.logger).Log("{{- $packageName}}:repository:delete", err.Error())
+		return err
+	}
+	queryable := ref.(*sql.Queryable)
+	normalize(&params)
+	q := helper.New()
+	q = q.Delete()
+	q = q.From("`{{- $packageName}}`")
+	q = buildStatement(q, params, priorities)
+	query, values := q.Build()
+	if query == "" {
+		return errors.New("Delete operation requires condition")
+	}
+	_, err := queryable.ExecContext(ctx, query, values...)
+	return err
+}
