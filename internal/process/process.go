@@ -91,6 +91,7 @@ func (r *runner) Initialize(path string) error {
 		err := reader.Read(func(data string) error {
 			data = strings.ReplaceAll(data, "$REPOSITORY_PATH", repoPath)
 			data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
+			data = strings.ReplaceAll(data, "$PROJECT_PATH", r.config["$PROJECT_PATH"].(string))
 			return writer.Write(data)
 		})
 		if err != nil {
@@ -236,6 +237,9 @@ func (r *runner) getConfig(path string) error {
 	}
 	if r.config["$DB_TYPE"] == nil {
 		return errors.New("$DB_TYPE is mandatory")
+	}
+	if r.config["$PROJECT_PATH"] == nil {
+		return errors.New("$PROJECT_PATH is mandatory")
 	}
 	return nil
 }
