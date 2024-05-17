@@ -3,6 +3,8 @@ package process
 import (
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -215,12 +217,25 @@ func (r *runner) getConfig(path string) error {
 func run(cli string, args ...string) error {
 
 	cmd := exec.Command(cli, args...)
-	stdout, err := cmd.Output()
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
-		fmt.Println(err.Error())
-		return err
+		fmt.Printf("Error: %v\n", err)
 	}
-	// Print the output
-	fmt.Println(string(stdout))
+	if err := cmd.Start(); err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	bytes, err := io.ReadAll(stdOut)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	if err := cmd.Wait(); err != nil {
+		fmt.Printf("Error: %v\n", err)
+		if exitError, ok := err.(*exec.ExitError); ok {
+			fmt.Printf("Exit code is %d\n", exitError.ExitCode())
+		}
+	}
+	fmt.Println(string(bytes))
 	return nil
 }
