@@ -176,6 +176,7 @@ func (r *runner) getConfig(path string) error {
 		return errors.New("$DB_SCHEMA value should be array")
 	} else {
 		var output strings.Builder
+		output.WriteRune('[')
 		for i, item := range arr {
 			if i > 0 {
 				output.WriteRune(',')
@@ -184,12 +185,14 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
+		output.WriteRune(']')
 		r.config["$DB_SCHEMA"] = output.String()
 	}
 	if arr, ok := r.config["$DB_INCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_INCLUDE_TABLES"] = "[]"
 	} else {
 		var output strings.Builder
+		output.WriteRune('[')
 		for i, item := range arr {
 			if i > 0 {
 				output.WriteRune(',')
@@ -198,12 +201,14 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
+		output.WriteRune(']')
 		r.config["$DB_INCLUDE_TABLES"] = output.String()
 	}
 	if arr, ok := r.config["$DB_EXCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_EXCLUDE_TABLES"] = "[]"
 	} else {
 		var output strings.Builder
+		output.WriteRune('[')
 		for i, item := range arr {
 			if i > 0 {
 				output.WriteRune(',')
@@ -212,6 +217,7 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
+		output.WriteRune(']')
 		r.config["$DB_EXCLUDE_TABLES"] = output.String()
 	}
 	if r.config["$WORKDIR_PATH"] == nil {
