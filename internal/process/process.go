@@ -175,29 +175,44 @@ func (r *runner) getConfig(path string) error {
 	} else if arr, ok := r.config["$DB_SCHEMA"].([]interface{}); !ok {
 		return errors.New("$DB_SCHEMA value should be array")
 	} else {
-		tmp := make([]string, 0)
-		for _, item := range arr {
-			tmp = append(tmp, fmt.Sprintf("\"%v\"", item))
+		var output strings.Builder
+		for i, item := range arr {
+			if i > 0 {
+				output.WriteRune(',')
+			}
+			output.WriteRune('"')
+			output.WriteString(item.(string))
+			output.WriteRune('"')
 		}
-		r.config["$DB_SCHEMA"] = fmt.Sprintf("%v", tmp)
+		r.config["$DB_SCHEMA"] = output
 	}
 	if arr, ok := r.config["$DB_INCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_INCLUDE_TABLES"] = "[]"
 	} else {
-		tmp := make([]string, 0)
-		for _, item := range arr {
-			tmp = append(tmp, fmt.Sprintf("\"%v\"", item))
+		var output strings.Builder
+		for i, item := range arr {
+			if i > 0 {
+				output.WriteRune(',')
+			}
+			output.WriteRune('"')
+			output.WriteString(item.(string))
+			output.WriteRune('"')
 		}
-		r.config["$DB_INCLUDE_TABLES"] = fmt.Sprintf("%v", tmp)
+		r.config["$DB_INCLUDE_TABLES"] = output
 	}
 	if arr, ok := r.config["$DB_EXCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_EXCLUDE_TABLES"] = "[]"
 	} else {
-		tmp := make([]string, 0)
-		for _, item := range arr {
-			tmp = append(tmp, fmt.Sprintf("\"%v\"", item))
+		var output strings.Builder
+		for i, item := range arr {
+			if i > 0 {
+				output.WriteRune(',')
+			}
+			output.WriteRune('"')
+			output.WriteString(item.(string))
+			output.WriteRune('"')
 		}
-		r.config["$DB_EXCLUDE_TABLES"] = fmt.Sprintf("%v", tmp)
+		r.config["$DB_EXCLUDE_TABLES"] = output
 	}
 	if r.config["$WORKDIR_PATH"] == nil {
 		return errors.New("$WORKDIR_PATH is mandatory")
