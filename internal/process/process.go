@@ -74,10 +74,6 @@ func (r *runner) Initialize(path string) error {
 			break
 		}
 	}
-	rootPath := tmp.String()
-	if len(rootPath) > 0 {
-		rootPath = rootPath[:len(rootPath)-1]
-	}
 
 	for _, template := range templates {
 		var reader config.File
@@ -111,7 +107,16 @@ func (r *runner) Initialize(path string) error {
 			data = strings.ReplaceAll(data, "$REPOSITORY_PATH", repoPath)
 			data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 			data = strings.ReplaceAll(data, "$TEMPLATE", template)
-			data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/%v", rootPath, template))
+			switch template {
+			case "key", "model":
+				{
+					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/%v", modelPath, template))
+				}
+			default:
+				{
+					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/%v", repoPath, template))
+				}
+			}
 			return tomlBuild.Write(data)
 		})
 		if err != nil {
