@@ -109,7 +109,11 @@ func (r *runner) Initialize(path string) error {
 			data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 			data = strings.ReplaceAll(data, "$TEMPLATE", template)
 			switch template {
-			case "key", "model":
+			case "key":
+				{
+					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/key", modelPath))
+				}
+			case "model":
 				{
 					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v", modelPath))
 				}
