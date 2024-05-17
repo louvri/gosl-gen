@@ -1,11 +1,16 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
-
 */
 package main
 
-import "github.com/louvri/gosl-gen/cmd"
+import (
+	"log"
+
+	"github.com/louvri/gosl-gen/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		log.Fatal(err)
+	}
 }

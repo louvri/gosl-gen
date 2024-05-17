@@ -4,8 +4,9 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"os"
+	"fmt"
 
+	"github.com/louvri/gosl-gen/internal/process"
 	"github.com/spf13/cobra"
 )
 
@@ -18,27 +19,30 @@ var rootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute() error {
 	err := rootCmd.Execute()
 	if err != nil {
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
 func init() {
+	cfg := ""
 	var initCmd = &cobra.Command{
 		Use:   "init",
 		Short: "initialize gosl powered project",
 		Long:  `create & copy all necessary files required by gosl to run in the project`,
 		Run: func(cmd *cobra.Command, args []string) {
-		},
-	}
-	var cfgCmd = &cobra.Command{
-		Use:   "cfg",
-		Short: `set gosl config file`,
-		Long:  `set gosl config file, such as workdir, dbConnection ,dbType, dbSchema, dbIncludeTables, dbExcludeTables`,
-		Args:  cobra.ExactArgs(1),
-		Run: func(cmd *cobra.Command, args []string) {
+			if cfg != "" {
+				runner := process.New()
+				err := runner.Initialize(cfg)
+				if err != nil {
+					fmt.Printf("initialization failed %v\n", err)
+				}
+			} else {
+				fmt.Println("config is not set")
+			}
 
 		},
 	}
@@ -47,12 +51,20 @@ func init() {
 		Short: `generate golang helper library at host project`,
 		Long:  `generate model, helper, and query golang modules. Built based on the stored configs`,
 		Run: func(cmd *cobra.Command, args []string) {
-
+			runner := process.New()
+			if err := runner.IsInitiated(); err == nil {
+				err := runner.Generate(cfg)
+				if err != nil {
+					fmt.Printf("gosl-gen failed %v\n", err)
+				} else {
+					fmt.Println("gosl is generated")
+				}
+			} else {
+				fmt.Println(err.Error())
+			}
 		},
 	}
-
+	rootCmd.PersistentFlags().StringVarP(&cfg, "config", "c", "", "config file")
 	rootCmd.AddCommand(initCmd)
-	rootCmd.AddCommand(cfgCmd)
 	rootCmd.AddCommand(genCmd)
-	rootCmd.MarkFlagRequired("cfg")
 }
