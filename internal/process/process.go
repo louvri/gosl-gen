@@ -74,7 +74,6 @@ func (r *runner) Initialize(path string) error {
 			break
 		}
 	}
-
 	for _, template := range templates {
 		var reader config.File
 		var writer config.File
@@ -99,27 +98,38 @@ func (r *runner) Initialize(path string) error {
 			return err
 		}
 		err = tomlTemplate.Read(func(data string) error {
-			data = strings.ReplaceAll(data, "$DB_CONNECTION_STRING", r.config["$DB_CONNECTION_STRING"].(string))
-			data = strings.ReplaceAll(data, "$DB_SCHEMA", fmt.Sprintf("%v", r.config["$DB_SCHEMA"]))
-			data = strings.ReplaceAll(data, "$DB_INCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_INCLUDE_TABLES"]))
-			data = strings.ReplaceAll(data, "$DB_EXCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_EXCLUDE_TABLES"]))
-			data = strings.ReplaceAll(data, "$DB_TYPE", r.config["$DB_TYPE"].(string))
-			data = strings.ReplaceAll(data, "$WORKDIR_PATH", workdirPath)
-			data = strings.ReplaceAll(data, "$REPOSITORY_PATH", repoPath)
-			data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
-			data = strings.ReplaceAll(data, "$TEMPLATE", template)
-			switch template {
-			case "key":
-				{
-					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/key", modelPath))
-				}
-			case "model":
-				{
-					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v", modelPath))
-				}
-			default:
-				{
-					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v", repoPath))
+			if template == "repository" {
+				data = strings.ReplaceAll(data, "$DB_CONNECTION_STRING", r.config["$DB_CONNECTION_STRING"].(string))
+				data = strings.ReplaceAll(data, "$DB_SCHEMA", fmt.Sprintf("%v", r.config["$DB_SCHEMA"]))
+				data = strings.ReplaceAll(data, "$DB_INCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_INCLUDE_TABLES"]))
+				data = strings.ReplaceAll(data, "$DB_EXCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_EXCLUDE_TABLES"]))
+				data = strings.ReplaceAll(data, "$DB_TYPE", r.config["$DB_TYPE"].(string))
+				data = strings.ReplaceAll(data, "$WORKDIR_PATH", workdirPath)
+
+				data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
+			} else {
+				data = strings.ReplaceAll(data, "$DB_CONNECTION_STRING", r.config["$DB_CONNECTION_STRING"].(string))
+				data = strings.ReplaceAll(data, "$DB_SCHEMA", fmt.Sprintf("%v", r.config["$DB_SCHEMA"]))
+				data = strings.ReplaceAll(data, "$DB_INCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_INCLUDE_TABLES"]))
+				data = strings.ReplaceAll(data, "$DB_EXCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_EXCLUDE_TABLES"]))
+				data = strings.ReplaceAll(data, "$DB_TYPE", r.config["$DB_TYPE"].(string))
+				data = strings.ReplaceAll(data, "$WORKDIR_PATH", workdirPath)
+				data = strings.ReplaceAll(data, "$REPOSITORY_PATH", repoPath)
+				data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
+				data = strings.ReplaceAll(data, "$TEMPLATE", template)
+				switch template {
+				case "key":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/key/{{.Table}}%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
+					}
+				case "model":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
+					}
+				default:
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
+					}
 				}
 			}
 			return tomlBuild.Write(data)
@@ -256,19 +266,23 @@ func run(cli string, args ...string) error {
 	stdOut, err := cmd.StdoutPipe()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
+		return err
 	}
 	if err := cmd.Start(); err != nil {
 		fmt.Printf("Error: %v\n", err)
+		return err
 	}
 	bytes, err := io.ReadAll(stdOut)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
+		return err
 	}
 	if err := cmd.Wait(); err != nil {
 		fmt.Printf("Error: %v\n", err)
 		if exitError, ok := err.(*exec.ExitError); ok {
 			fmt.Printf("Exit code is %d\n", exitError.ExitCode())
 		}
+		return err
 	}
 	fmt.Println(string(bytes))
 	return nil
