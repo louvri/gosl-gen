@@ -120,15 +120,15 @@ func (r *runner) Initialize(path string) error {
 				switch template {
 				case "key":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/key/{{.Table}}%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/key/{{.Table}}/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
 					}
 				case "model":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
 					}
 				default:
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
 					}
 				}
 			}
