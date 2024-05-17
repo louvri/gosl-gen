@@ -9,7 +9,7 @@ import (
 	"time"
     "unicode"
     helper "github.com/louvri/gosl/builder"
-	db "$MODEL_PATH/{{$packageName}}"
+	db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
 )
 
 func buildSelection(indexFilter map[string]bool) string {
