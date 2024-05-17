@@ -111,11 +111,11 @@ func (r *runner) Initialize(path string) error {
 			switch template {
 			case "key", "model":
 				{
-					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/%v", modelPath, template))
+					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v", modelPath))
 				}
 			default:
 				{
-					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v/%v", repoPath, template))
+					data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("%v", repoPath))
 				}
 			}
 			return tomlBuild.Write(data)
