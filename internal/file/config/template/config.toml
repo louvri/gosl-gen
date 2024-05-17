@@ -80,7 +80,7 @@ NoOverwriteGlobs = ["*.perm.go"]
 # "tables.gotmpl" would render tables.gotmpl template with data from the the
 # "public.users" table to ./public/users/users.go.
 [TablePaths]
-"$GENERATE_PATH/{{.Table}}/$TEMPLATE.go" = "./$TEMPLATE.gotmpl"
+$GENERATE_PATH
 
 # SchemaPaths iis a map of output paths to template paths that tells Gnorm how
 # to render and output its schema info.  Each template will be rendered with
