@@ -184,7 +184,7 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
-		r.config["$DB_SCHEMA"] = output
+		r.config["$DB_SCHEMA"] = output.String()
 	}
 	if arr, ok := r.config["$DB_INCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_INCLUDE_TABLES"] = "[]"
@@ -198,7 +198,7 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
-		r.config["$DB_INCLUDE_TABLES"] = output
+		r.config["$DB_INCLUDE_TABLES"] = output.String()
 	}
 	if arr, ok := r.config["$DB_EXCLUDE_TABLES"].([]interface{}); !ok {
 		r.config["$DB_EXCLUDE_TABLES"] = "[]"
@@ -212,7 +212,7 @@ func (r *runner) getConfig(path string) error {
 			output.WriteString(item.(string))
 			output.WriteRune('"')
 		}
-		r.config["$DB_EXCLUDE_TABLES"] = output
+		r.config["$DB_EXCLUDE_TABLES"] = output.String()
 	}
 	if r.config["$WORKDIR_PATH"] == nil {
 		return errors.New("$WORKDIR_PATH is mandatory")
