@@ -1,0 +1,20 @@
+{{- $packageName := toLower .Table.Name }}
+package search
+
+import  (
+     db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
+     "github.com/louvri/gosl/transformer"
+     "github.com/louvri/gosl/paging"
+     "github.com/louvri/gosl/header"
+)
+
+type Request struct {
+    Body Body
+    Transformer *transformer.Transformer
+    Paging paging.Request
+    Header      header.Request
+}
+
+func (b *Body) ToDBModel() db.Model {
+    return db.Model{}
+}

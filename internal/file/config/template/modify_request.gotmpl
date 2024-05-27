@@ -1,0 +1,14 @@
+{{- $packageName := toLower .Table.Name }}
+package modify
+
+import  (
+     db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
+)
+
+type Request struct {
+    Body Body
+}
+
+func (b *Body) ToDBModel() db.Model {
+    return db.Model{}
+}

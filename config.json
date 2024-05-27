@@ -1,0 +1,15 @@
+{
+    "workdirPath": "",
+    "modelPath":"",
+    "repositoryPath":"",
+    "keyPath":"",
+    "dbConnectionString":"",
+    "dbType":"",
+    "dbSchema": "",
+    "dbIncludeTables":"",
+    "dbExcludeTables":"",
+    "generateAll": true,
+    "servicePath": "",
+    "requestPath": "",
+    "endpointPath": ""
+}
