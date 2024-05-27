@@ -157,6 +157,14 @@ func (r *runner) Generate(path string) error {
 		}
 		fmt.Printf("- generating %s/%s \n", buildPath, template)
 	}
+	if r.config["$WORKDIR_PATH"] != nil {
+		command := fmt.Sprintf(`cd %s && go mod tidy`, r.config["$WORKDIR_PATH"].(string))
+		if err := run("bash", "-c", command); err != nil {
+			return err
+		}
+		fmt.Printf("go mod tidy\n")
+	}
+
 	fmt.Println("generated")
 	return nil
 }
