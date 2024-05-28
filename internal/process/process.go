@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "key", "model", "query", "repository"}
+var templates = []string{"helper", "key", "model", "query", "repository", "request_modify", "request_search", "service_reader", "service_writer"}
 
 var instance Runner
 
@@ -65,6 +65,19 @@ func (r *runner) Initialize(path string) error {
 		fmt.Printf("Error: invalid model path\n")
 		return errors.New("invalid model path")
 	}
+
+	servicePath, ok := r.config["$SERVICE_PATH"].(string)
+	if !ok {
+		fmt.Printf("Error: invalid service path\n")
+		return errors.New("invalid service path")
+	}
+
+	requestPath, ok := r.config["$REQUEST_PATH"].(string)
+	if !ok {
+		fmt.Printf("Error: invalid request path\n")
+		return errors.New("invalid request path")
+	}
+
 	var tmp strings.Builder
 	max := len(modelPath)
 	for i, r := range repoPath {
@@ -118,6 +131,22 @@ func (r *runner) Initialize(path string) error {
 				data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 				data = strings.ReplaceAll(data, "$TEMPLATE", template)
 				switch template {
+				case "request_modify":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/modify/{{.Table}}/%s.go\" =\"%s.gotmpl\"", requestPath, template, template))
+					}
+				case "request_search":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/search/{{.Table}}/%s.go\" =\"%s.gotmpl\"", requestPath, template, template))
+					}
+				case "service_reader":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/reader/{{.Table}}/%s.go\" =\"%s.gotmpl\"", servicePath, template, template))
+					}
+				case "service_writer":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", servicePath, template, template))
+					}
 				case "key":
 					{
 						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/key/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
