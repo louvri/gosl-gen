@@ -145,7 +145,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "search_request":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", servicePath, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", requestPath, template))
 					}
 				case "service_writer":
 					{
