@@ -9,5 +9,6 @@
     "$MODEL_PATH":"",
     "$SERVICE_PATH": "",
     "$REQUEST_PATH": "",
-    "$PROJECT_PATH":""
+    "$PROJECT_PATH":"",
+    "$GENERATE_SERVICE": false
 }

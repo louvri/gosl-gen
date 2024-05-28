@@ -12,7 +12,6 @@ import (
     db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
     "github.com/louvri/gosl/builder"
     "github.com/louvri/gob/str"
-    "$PROJECT_PATH/driver"
 )
 
 type service struct {
@@ -37,20 +36,20 @@ func New(repo base.Repository, logger log.Logger) Service {
 func (s *service) Search(ctx context.Context, request search.Request) ([]db.Model, error) {
     params, err := s.buildRequest(request)
     if err != nil {
-		level.Error(driver.Instance().Logger()).Log("{{$packageName}}:service:reader:search", err)
+		level.Error(s.logger).Log("{{$packageName}}:service:reader:search", err)
 		return nil, err
 	}
     if request.Transformer != nil {
         _, err := s.repository.Query(ctx, params, nil, *request.Transformer)
 		if err != nil {
-			level.Error(driver.Instance().Logger()).Log(err.Error())
+			level.Error(s.logger).Log(err.Error())
 		}
 		return nil, err
     }
 
     data, err := s.repository.Query(ctx, params, nil)
 	if err != nil {
-		level.Error(driver.Instance().Logger()).Log(err.Error())
+		level.Error(s.logger).Log(err.Error())
 	}
 	if data == nil {
 		return nil, nil
@@ -61,12 +60,12 @@ func (s *service) Search(ctx context.Context, request search.Request) ([]db.Mode
 func (s *service) Count(ctx context.Context, request search.Request) (int, error) {
     params, err := s.buildRequest(request)
 	if err != nil {
-		level.Error(driver.Instance().Logger()).Log("{{$packageName}}:service:reader:count", err)
+		level.Error(s.logger).Log("{{$packageName}}:service:reader:count", err)
 		return 0, err
 	}
 	total, err := s.repository.Count(ctx, params, nil)
 	if err != nil {
-		level.Error(driver.Instance().Logger()).Log(err.Error())
+		level.Error(s.logger).Log(err.Error())
 	}
 	return total, err
 }

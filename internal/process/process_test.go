@@ -15,7 +15,7 @@ func TestIsInitated(t *testing.T) {
 
 func TestGenerate(t *testing.T) {
 	runner := New()
-	err := runner.Generate("../../build/test.json")
+	err := runner.Generate("../../build/config.json")
 	if err != nil {
 		t.Fatal(err)
 	}

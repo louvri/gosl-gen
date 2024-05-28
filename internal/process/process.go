@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "key", "model", "query", "repository"}
+var templates = []string{"helper", "key", "model", "query", "repository", "service_reader", "service_writer", "modify_body", "modify_request", "search_body", "search_request"}
 
 var instance Runner
 
@@ -65,37 +65,15 @@ func (r *runner) Initialize(path string) error {
 		fmt.Printf("Error: invalid model path\n")
 		return errors.New("invalid model path")
 	}
-	var requestPath, servicePath string
-
-	if allowed, _ := r.config["$GENERATE_SERVICE"].(bool); allowed {
-		templates = append(templates, "service_reader")
-		templates = append(templates, "service_writer")
-		templates = append(templates, "modify_body")
-		templates = append(templates, "modify_request")
-		templates = append(templates, "search_body")
-		templates = append(templates, "search_request")
-		servicePath, ok = r.config["$SERVICE_PATH"].(string)
-		if !ok {
-			fmt.Printf("Error: invalid service path\n")
-			return errors.New("invalid service path")
-		}
-		requestPath, ok = r.config["$REQUEST_PATH"].(string)
-		if !ok {
-			fmt.Printf("Error: invalid request path\n")
-			return errors.New("invalid request path")
-		}
+	servicePath, ok := r.config["$SERVICE_PATH"].(string)
+	if !ok {
+		fmt.Printf("Error: invalid service path\n")
+		return errors.New("invalid service path")
 	}
-
-	if allowed, _ := r.config["$GENERATE_REQUEST"].(bool); allowed {
-		templates = append(templates, "modify_body")
-		templates = append(templates, "modify_request")
-		templates = append(templates, "search_body")
-		templates = append(templates, "search_request")
-		requestPath, ok = r.config["$REQUEST_PATH"].(string)
-		if !ok {
-			fmt.Printf("Error: invalid request path\n")
-			return errors.New("invalid request path")
-		}
+	requestPath, ok := r.config["$REQUEST_PATH"].(string)
+	if !ok {
+		fmt.Printf("Error: invalid request path\n")
+		return errors.New("invalid request path")
 	}
 
 	var tmp strings.Builder
