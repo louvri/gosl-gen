@@ -94,7 +94,7 @@ type Body struct {
     {{- range $index , $element := $tokens}}
         {{- $field = (print $field (title $element))}}
     {{- end}}
-    {{$field}} {{.Type}} `json:"{{- .Name}}"`
+    {{$field}} string `json:"{{- .Name}}"`
     {{- end}}
 {{- end}}
 {{- range .Table.Columns }}
@@ -124,7 +124,7 @@ type Body struct {
     {{- range $index , $element := $tokens}}
         {{- $field = (print $field (title $element))}}
     {{- end}}
-    {{$field}} {{.Type}} `json:"{{- .Name}}"`
+    {{$field}} string `json:"{{- .Name}}"`
     {{- end}}
 {{- end}}
 }
