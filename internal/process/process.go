@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "key", "model", "query", "repository", "request_modify", "request_search", "service_reader", "service_writer"}
+var templates = []string{"helper", "key", "model", "query", "repository", "modify_body", "modify_request", "search_body", "search_request", "service_reader", "service_writer"}
 
 var instance Runner
 
@@ -131,21 +131,29 @@ func (r *runner) Initialize(path string) error {
 				data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 				data = strings.ReplaceAll(data, "$TEMPLATE", template)
 				switch template {
-				case "request_modify":
+				case "modify_body":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/modify/{{.Table}}/%s.go\" =\"%s.gotmpl\"", requestPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/body.go\" =\"%s.gotmpl\"", requestPath, template))
 					}
-				case "request_search":
+				case "modify_request":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/search/{{.Table}}/%s.go\" =\"%s.gotmpl\"", requestPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/modify/{{.Table}}/request.go\" =\"%s.gotmpl\"", requestPath, template))
 					}
-				case "service_reader":
+				case "search_body":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/reader/{{.Table}}/%s.go\" =\"%s.gotmpl\"", servicePath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/search/{{.Table}}/body.go\" =\"%s.gotmpl\"", requestPath, template))
+					}
+				case "search_request":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/reader/{{.Table}}/request.go\" =\"%s.gotmpl\"", servicePath, template))
 					}
 				case "service_writer":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", servicePath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/writer/service.go\" =\"%s.gotmpl\"", servicePath, template))
+					}
+				case "service_reader":
+					{
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/reader/service.go\" =\"%s.gotmpl\"", servicePath, template))
 					}
 				case "key":
 					{
