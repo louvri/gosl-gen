@@ -9,6 +9,7 @@ import(
     base "$PROJECT_PATH/$REPOSITORY_PATH"
     "$PROJECT_PATH/internal/model/request/{{$packageName}}/modify"
     db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
+    "github.com/louvri/gosl/builder"
 )
 
 type service struct {
