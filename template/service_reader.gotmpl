@@ -26,7 +26,7 @@ type Service interface{
 }
 
 
-func New(repo repository.Repository, logger log.Logger) Service {
+func New(repo base.Repository, logger log.Logger) Service {
 	return &service{
 		logger: logger,
 		repository:   repo,
