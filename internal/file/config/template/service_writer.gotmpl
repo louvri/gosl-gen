@@ -41,7 +41,7 @@ func (s *service) Create(ctx context.Context, request modify.Request) (int64, er
 func (s *service) Update(ctx context.Context, request modify.Request) error {
     req := request.Body.ToDBModel()
     tobeUpdated := req.ToMap(nil)
-    err := s.repo.Update(ctx, tobeUpdated, builder.QueryParams{
+    err := s.repository.Update(ctx, tobeUpdated, builder.QueryParams{
 		Object: db.Model{
 			Id:   request.Body.Id,
 		},
