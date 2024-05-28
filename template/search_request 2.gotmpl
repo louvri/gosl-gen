@@ -1,0 +1,16 @@
+package search
+
+import  (
+     "github.com/louvri/gosl/transformer"
+     "github.com/louvri/gosl/paging"
+     "github.com/louvri/gosl/header"
+)
+
+
+
+type Request struct {
+    Body Body
+    Transformer *transformer.Transformer
+    Paging paging.Request
+    Header      header.Request
+}

@@ -1,0 +1,11 @@
+{{- $packageName := toLower .Table.Name }}
+package reader_test
+
+
+var ctx context.Context
+var e Service
+
+func init() {
+    //connect to local db
+	cfg, _ := _cfg.Get("")
+}

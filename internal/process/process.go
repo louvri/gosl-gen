@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "key", "model", "query", "repository", "modify_body", "modify_request", "search_body", "search_request", "service_reader", "service_writer"}
+var templates = []string{"helper", "key", "model", "query", "repository"}
 
 var instance Runner
 
@@ -65,17 +65,32 @@ func (r *runner) Initialize(path string) error {
 		fmt.Printf("Error: invalid model path\n")
 		return errors.New("invalid model path")
 	}
+	var requestPath, servicePath string
 
-	servicePath, ok := r.config["$SERVICE_PATH"].(string)
-	if !ok {
-		fmt.Printf("Error: invalid service path\n")
-		return errors.New("invalid service path")
+	if allowed, _ := r.config["$GENERATE_SERVICE"].(bool); allowed {
+		templates = append(templates, "service_reader")
+		templates = append(templates, "service_writer")
+		templates = append(templates, "modify_body")
+		templates = append(templates, "modify_request")
+		templates = append(templates, "search_body")
+		templates = append(templates, "search_request")
+		servicePath, ok = r.config["$SERVICE_PATH"].(string)
+		if !ok {
+			fmt.Printf("Error: invalid service path\n")
+			return errors.New("invalid service path")
+		}
 	}
 
-	requestPath, ok := r.config["$REQUEST_PATH"].(string)
-	if !ok {
-		fmt.Printf("Error: invalid request path\n")
-		return errors.New("invalid request path")
+	if allowed, _ := r.config["$GENERATE_REQUEST"].(bool); allowed {
+		templates = append(templates, "modify_body")
+		templates = append(templates, "modify_request")
+		templates = append(templates, "search_body")
+		templates = append(templates, "search_request")
+		requestPath, ok = r.config["$REQUEST_PATH"].(string)
+		if !ok {
+			fmt.Printf("Error: invalid request path\n")
+			return errors.New("invalid request path")
+		}
 	}
 
 	var tmp strings.Builder
@@ -133,19 +148,27 @@ func (r *runner) Initialize(path string) error {
 				switch template {
 				case "modify_body":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						if requestPath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						}
 					}
 				case "modify_request":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						if requestPath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						}
 					}
 				case "search_body":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						if requestPath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						}
 					}
 				case "search_request":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						if requestPath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						}
 					}
 				case "service_writer":
 					{

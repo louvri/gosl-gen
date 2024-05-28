@@ -1,0 +1,53 @@
+{{- $packageName := toLower .Table.Name }}
+package writer
+
+import(
+    "context"
+    "strings"
+
+    "github.com/go-kit/log"
+    base "$PROJECT_PATH/$REPOSITORY_PATH"
+    "$PROJECT_PATH/internal/model/request/{{$packageName}}/modify"
+)
+
+type service struct {
+	logger log.Logger
+    repository base.Repository
+}
+
+type Service interface{
+    Create(ctx context.Context, request modify.Request) (int64, error)
+    Update(ctx context.Context, request modify.Request) error
+}
+
+
+func New(repo base.Repository, logger log.Logger) Service {
+	return &service{
+		logger: logger,
+		repository:   repo,
+	}
+}
+
+
+func (s *service) Create(ctx context.Context, request modify.Request) (int64, error) {
+    toBeCreate := request.Body.ToDBModel()
+    id, err := s.repository.Insert(ctx, toBeCreate.ToMap(nil))
+    if err != nil && strings.Contains(err.Error(), "no_changes") {
+		return -1, err
+	}
+    return id, nil
+}
+
+func (s *service) Update(ctx context.Context, request modify.Request) error {
+    req := request.Body.ToDBModel()
+    tobeUpdated := req.ToMap(nil)
+    err := s.repo.Update(ctx, tobeUpdated, builder.QueryParams{
+		Object: db.Model{
+			Id:   request.Body.Id,
+		},
+	}, nil)
+    if err != nil && !strings.Contains(err.Error(), "no_changes") {
+		return err
+	}
+	return nil
+}
