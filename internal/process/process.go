@@ -79,6 +79,11 @@ func (r *runner) Initialize(path string) error {
 			fmt.Printf("Error: invalid service path\n")
 			return errors.New("invalid service path")
 		}
+		requestPath, ok = r.config["$REQUEST_PATH"].(string)
+		if !ok {
+			fmt.Printf("Error: invalid request path\n")
+			return errors.New("invalid request path")
+		}
 	}
 
 	if allowed, _ := r.config["$GENERATE_REQUEST"].(bool); allowed {
