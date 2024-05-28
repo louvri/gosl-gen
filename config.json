@@ -1,15 +1,13 @@
 {
-    "workdirPath": "",
-    "modelPath":"",
-    "repositoryPath":"",
-    "keyPath":"",
-    "dbConnectionString":"",
-    "dbType":"",
-    "dbSchema": "",
-    "dbIncludeTables":"",
-    "dbExcludeTables":"",
-    "generateAll": true,
-    "servicePath": "",
-    "requestPath": "",
-    "endpointPath": ""
+    "$DB_CONNECTION_STRING":"",
+    "$DB_SCHEMA":[""],
+    "$DB_TYPE":"",
+    "$DB_INCLUDE_TABLES":[],
+    "$DB_EXCLUDE_TABLES":[""],
+    "$WORKDIR_PATH":"",
+    "$REPOSITORY_PATH":"",
+    "$MODEL_PATH":"",
+    "$SERVICE_PATH": "",
+    "$REQUEST_PATH": "",
+    "$PROJECT_PATH":""
 }
