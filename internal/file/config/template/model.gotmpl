@@ -5,6 +5,9 @@ package {{ $packageName}}
     {{- if eq .Type "sql.NullTime" }}
         {{- $shouldImportSql = true }}
     {{- end }}
+    {{- if eq .Type "sql.NullString" }}
+        {{- $shouldImportSql = true }}
+    {{- end }}
 {{- end }}
 import (
 	"fmt"
