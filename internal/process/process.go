@@ -65,18 +65,24 @@ func (r *runner) Initialize(path string) error {
 		fmt.Printf("Error: invalid model path\n")
 		return errors.New("invalid model path")
 	}
+	// flagging for service and request
+	writeService := true
+	writeRequest := true
 	var servicePath string
-	if tmp, ok := r.config["$SERVICE_PATH"].(string); ok {
+	if tmp, ok := r.config["$SERVICE_PATH"].(string); ok && tmp != "" {
 		servicePath = tmp
+	} else {
+		writeService = false
 	}
 	var requestPath string
-
-	if tmp, ok := r.config["$REQUEST_PATH"].(string); ok {
+	if tmp, ok := r.config["$REQUEST_PATH"].(string); ok && tmp != "" {
 		requestPath = tmp
 		if servicePath != "" && requestPath == "" {
 			fmt.Printf("Error: invalid request path\n")
 			return errors.New("request is mandatory if service is generated")
 		}
+	} else {
+		writeRequest = false
 	}
 
 	var tmp strings.Builder
@@ -135,7 +141,7 @@ func (r *runner) Initialize(path string) error {
 				switch template {
 				case "modify_body":
 					{
-						if requestPath != "" {
+						if writeRequest {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/body.go\" =\"%s.gotmpl\"", requestPath, template))
 						} else {
 							return nil
@@ -143,7 +149,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "modify_request":
 					{
-						if requestPath != "" {
+						if writeRequest {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/request.go\" =\"%s.gotmpl\"", requestPath, template))
 						} else {
 							return nil
@@ -151,7 +157,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "search_body":
 					{
-						if requestPath != "" {
+						if writeRequest {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/body.go\" =\"%s.gotmpl\"", requestPath, template))
 						} else {
 							return nil
@@ -159,7 +165,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "search_request":
 					{
-						if requestPath != "" {
+						if writeRequest {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", requestPath, template))
 						} else {
 							return nil
@@ -167,7 +173,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "service_writer":
 					{
-						if servicePath != "" {
+						if writeService {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/writer/service.go\" =\"%s.gotmpl\"", servicePath, template))
 						} else {
 							return nil
@@ -175,7 +181,7 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "service_reader":
 					{
-						if servicePath != "" {
+						if writeService {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/reader/service.go\" =\"%s.gotmpl\"", servicePath, template))
 						} else {
 							return nil
@@ -201,6 +207,15 @@ func (r *runner) Initialize(path string) error {
 			fmt.Printf("Error: %v\n", err)
 			return err
 		}
+		if !writeService && strings.Contains(template, "service") {
+			continue
+		}
+		if !writeRequest && strings.Contains(template, "modify") {
+			continue
+		}
+		if !writeRequest && strings.Contains(template, "search") {
+			continue
+		}
 		fmt.Printf("- %s/%s copied\n", buildPath, template)
 	}
 	fmt.Println("initiated")
@@ -213,7 +228,27 @@ func (r *runner) Generate(path string) error {
 	if err != nil {
 		return err
 	}
+
+	// flagging for service and request
+	writeService := true
+	writeRequest := true
+	if tmp, ok := r.config["$SERVICE_PATH"].(string); !ok || tmp == "" {
+		writeService = false
+	}
+	if tmp, ok := r.config["$REQUEST_PATH"].(string); !ok || tmp == "" {
+		writeRequest = false
+	}
+
 	for _, template := range templates {
+		if !writeService && strings.Contains(template, "service") {
+			continue
+		}
+		if !writeRequest && strings.Contains(template, "modify") {
+			continue
+		}
+		if !writeRequest && strings.Contains(template, "search") {
+			continue
+		}
 		command := fmt.Sprintf(`cd %s/%s && gnorm gen -c ./config.toml`, buildPath, template)
 		if err := run("bash", "-c", command); err != nil {
 			return err
