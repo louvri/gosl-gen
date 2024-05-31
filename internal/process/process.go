@@ -65,15 +65,15 @@ func (r *runner) Initialize(path string) error {
 		fmt.Printf("Error: invalid model path\n")
 		return errors.New("invalid model path")
 	}
-	servicePath, ok := r.config["$SERVICE_PATH"].(string)
-	if !ok {
-		fmt.Printf("Error: invalid service path\n")
-		return errors.New("invalid service path")
+	var servicePath string
+	if tmp, ok := r.config["$SERVICE_PATH"].(string); ok {
+		servicePath = tmp
 	}
-	requestPath, ok := r.config["$REQUEST_PATH"].(string)
-	if !ok {
-		fmt.Printf("Error: invalid request path\n")
-		return errors.New("invalid request path")
+
+	var requestPath string
+
+	if tmp, ok := r.config["$REQUEST_PATH"].(string); ok {
+		requestPath = tmp
 	}
 
 	var tmp strings.Builder
