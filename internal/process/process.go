@@ -132,41 +132,54 @@ func (r *runner) Initialize(path string) error {
 				data = strings.ReplaceAll(data, "$REPOSITORY_PATH", repoPath)
 				data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 				data = strings.ReplaceAll(data, "$TEMPLATE", template)
+
 				switch template {
 				case "modify_body":
 					{
 						if requestPath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						} else {
+							return nil
 						}
 					}
 				case "modify_request":
 					{
 						if requestPath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/modify/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						} else {
+							return nil
 						}
 					}
 				case "search_body":
 					{
 						if requestPath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/body.go\" =\"%s.gotmpl\"", requestPath, template))
+						} else {
+							return nil
 						}
 					}
 				case "search_request":
 					{
 						if requestPath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/search/request.go\" =\"%s.gotmpl\"", requestPath, template))
+						} else {
+							return nil
 						}
 					}
 				case "service_writer":
 					{
 						if servicePath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/writer/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						} else {
+							return nil
 						}
 					}
 				case "service_reader":
 					{
 						if servicePath != "" {
 							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/reader/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						} else {
+							return nil
 						}
 					}
 				case "key":
