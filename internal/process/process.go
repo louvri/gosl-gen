@@ -69,15 +69,14 @@ func (r *runner) Initialize(path string) error {
 	if tmp, ok := r.config["$SERVICE_PATH"].(string); ok {
 		servicePath = tmp
 	}
-
 	var requestPath string
 
 	if tmp, ok := r.config["$REQUEST_PATH"].(string); ok {
+		requestPath = tmp
 		if servicePath != "" && requestPath == "" {
 			fmt.Printf("Error: invalid request path\n")
 			return errors.New("request is mandatory if service is generated")
 		}
-		requestPath = tmp
 	}
 
 	var tmp strings.Builder
