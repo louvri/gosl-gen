@@ -133,5 +133,126 @@ type Body struct {
 }
 
 func (b *Body) ToDBModel() db.Model {
-    return db.Model{}
+    return db.Model{
+            {{- range .Table.Columns }}
+            {{- if eq .Type "bool"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}  
+        {{- range .Table.Columns }}
+            {{- if eq .Type "int"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "int32"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "int64"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "float32"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "float64"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "[]byte"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "string"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "sql.NullString"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "uuid.UUID"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "time.Time"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+        {{- range .Table.Columns }}
+            {{- if eq .Type "sql.NullTime"}}
+            {{- $field := ""}}
+            {{- $tokens := split .Name "_"}}
+            {{- range $index , $element := $tokens}}
+                {{- $field = (print $field (title $element))}}
+            {{- end}}
+            {{$field}}:b.{{$field}},
+            {{- end}}
+        {{- end}}
+    }
 }
