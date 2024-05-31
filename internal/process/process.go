@@ -159,11 +159,15 @@ func (r *runner) Initialize(path string) error {
 					}
 				case "service_writer":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/writer/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						if servicePath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/writer/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						}
 					}
 				case "service_reader":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/reader/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						if servicePath != "" {
+							data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/reader/service.go\" =\"%s.gotmpl\"", servicePath, template))
+						}
 					}
 				case "key":
 					{
