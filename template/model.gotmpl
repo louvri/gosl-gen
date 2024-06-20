@@ -4,8 +4,6 @@ package {{ $packageName}}
 {{- range .Table.Columns }}
     {{- if eq .Type "sql.NullTime" }}
         {{- $shouldImportSql = true }}
-      {{- else if eq .Type "sql.NullString" }}
-        {{- $shouldImportSql = true }}
     {{- end }}
 {{- end }}
 import (
