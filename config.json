@@ -1,0 +1,11 @@
+{
+    "$DB_CONNECTION_STRING":"username:password@(host:port)/dbname",
+    "$DB_SCHEMA":["dbname"],
+    "$DB_TYPE":"database_type",
+    "$DB_INCLUDE_TABLES":[],
+    "$DB_EXCLUDE_TABLES":[],
+    "$WORKDIR_PATH":"",
+    "$REPOSITORY_PATH":"",
+    "$MODEL_PATH":"",
+    "$PROJECT_PATH":""
+    }

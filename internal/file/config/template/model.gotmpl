@@ -102,7 +102,7 @@ type Model struct {
     {{- range $index , $element := $tokens}}
         {{- $field = (print $field (title $element))}}
     {{- end}}
-    {{$field}} {{.Type}} `db:"{{- .Name}}"`
+    {{$field}} string `db:"{{- .Name}}"`
     {{- end}}
 {{- end}}
 {{- range .Table.Columns }}
@@ -288,15 +288,6 @@ func (m *Model) ToMap(builder map[string]interface{},dontIgnoreEmtpy ...bool) ma
                 } else {
                     builder["{{- $field }}"] = value
                 }
-            {{- else if eq .Type "sql.NullString"}}
-                if m.{{- $objectProperty}}.Valid {
-                    builder["{{- $field }}"] = m.{{- $objectProperty}}
-                } else {
-                    builder["{{- $field }}"] = sql.NullString{
-                        String: "",
-                        Valid: true,
-                    }
-                }
             {{- else}}
                 value := ""
                 if  m.Defaults["{{- $field}}"] != nil {
@@ -348,15 +339,6 @@ func (m *Model) ToMap(builder map[string]interface{},dontIgnoreEmtpy ...bool) ma
                 }
                 if m.{{- $objectProperty}} != value {
                     builder["{{- $field }}"] = m.{{- $objectProperty}}
-                }
-            {{- else if eq .Type "sql.NullString"}}
-                if m.{{- $objectProperty}}.Valid {
-                    builder["{{- $field }}"] = m.{{- $objectProperty}}
-                } else {
-                    builder["{{- $field }}"] = sql.NullString{
-                        String: "",
-                        Valid: true,
-                    }
                 }
             {{- else}}
                 value := ""
@@ -442,15 +424,6 @@ func (m *Model) ToMapWithFilter(builder map[string]interface{},filter []string,d
                             } else {
                                 builder["{{- $field }}"] = value
                             }
-                        {{- else if eq .Type "sql.NullString"}}
-                            if m.{{- $objectProperty}}.Valid {
-                                builder["{{- $field }}"] = m.{{- $objectProperty}}
-                            } else {
-                                builder["{{- $field }}"] = sql.NullString{
-                                    String: "",
-                                    Valid: true,
-                                }
-                            }
                         {{- else}}
                             value := ""
                             if  m.Defaults["{{- $field}}"] != nil {
@@ -502,15 +475,6 @@ func (m *Model) ToMapWithFilter(builder map[string]interface{},filter []string,d
                             }
                             if m.{{- $objectProperty}} != value {
                                 builder["{{- $field }}"] = m.{{- $objectProperty}}
-                            }
-                        {{- else if eq .Type "sql.NullString"}}
-                            if m.{{- $objectProperty}}.Valid {
-                                builder["{{- $field }}"] = m.{{- $objectProperty}}
-                            } else {
-                                builder["{{- $field }}"] = sql.NullString{
-                                    String: "",
-                                    Valid: true,
-                                }
                             }
                         {{- else}}
                             value := ""
