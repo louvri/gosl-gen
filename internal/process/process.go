@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "key", "model", "query", "repository"}
+var templates = []string{"helper", "model", "query", "repository"}
 
 var instance Runner
 
@@ -118,10 +118,6 @@ func (r *runner) Initialize(path string) error {
 				data = strings.ReplaceAll(data, "$MODEL_PATH", modelPath)
 				data = strings.ReplaceAll(data, "$TEMPLATE", template)
 				switch template {
-				case "key":
-					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/key/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
-					}
 				case "model":
 					{
 						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
