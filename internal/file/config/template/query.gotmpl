@@ -7,7 +7,6 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	sql "github.com/louvri/gosl"
-    "$PROJECT_PATH/$MODEL_PATH/key"
 	"github.com/louvri/gob/arr"
 	_sql "database/sql"
 	base "$PROJECT_PATH/$REPOSITORY_PATH"
@@ -46,7 +45,7 @@ func (i *repository) Set(ctx context.Context, model interface{}) (int64,error) {
 
 func (i *repository) Query(ctx context.Context, params []helper.QueryParams, priorities []string, trans ...transformer.Transformer) (interface{},error) {
 	var err error
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err = errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
@@ -126,7 +125,7 @@ func (i *repository) Count(ctx context.Context, params []helper.QueryParams, pri
 	{{- range .Table.PrimaryKeys }}
 		{{- $db_primary_key = .Name}}
 	{{- end}}
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err = errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
@@ -168,7 +167,7 @@ func (i *repository) Count(ctx context.Context, params []helper.QueryParams, pri
 
 //insert: insert data with default value, use map to include nil value
 func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error) {
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err := errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
@@ -198,7 +197,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
 func (i *repository) Update(ctx context.Context, model interface{}, params helper.QueryParams, priorities []string) error {
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err := errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
@@ -234,7 +233,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 
 //upsert : update or insert method that ignore any nil or empty value, use map to include nil value
 func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error) {
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err := errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
@@ -268,7 +267,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 }
 //delete : delete method
 func (i *repository) Delete(ctx context.Context, params helper.QueryParams, priorities ...string) error {
-	ref := ctx.Value(key.SQL_KEY)
+	ref := ctx.Value(gosl.SQL_KEY)
 	if ref == nil {
 		err := errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:delete", err.Error())
