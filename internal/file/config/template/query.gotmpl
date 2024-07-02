@@ -212,6 +212,8 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 		data = tmp.ToMap(nil)
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
+	}else if tmp, ok := model.(*db.Model); ok {
+		data = tmp.ToMap(nil)
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
