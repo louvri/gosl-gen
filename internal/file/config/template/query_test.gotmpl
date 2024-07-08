@@ -82,7 +82,7 @@ func init() {
 }
 
 
-func func TestGet(t *testing.T) {
+func TestGet(t *testing.T) {
     db := dbInt
 
 	// empty data
@@ -278,7 +278,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = true
+        {{$field}}: true,
         {{- end}}
     {{- end}}  
     {{- range .Table.Columns }}
@@ -288,7 +288,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = 540
+        {{$field}}: 540,
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -298,7 +298,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = 543
+        {{$field}}: 543,
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -308,7 +308,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = 542
+        {{$field}}: 542,
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -318,7 +318,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = 5.42
+        {{$field}}: 5.42,
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -328,7 +328,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = 5.42
+        {{$field}}: 5.42,
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -338,7 +338,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = []byte("testupsertpointer3")
+        {{$field}}: []byte("testupsertpointer3"),
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -348,7 +348,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = "testupsertpointer2"
+        {{$field}}: "testupsertpointer2",
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -358,7 +358,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = "testupsertpointer1"
+        {{$field}}: "testupsertpointer1",
         {{- end}}
     {{- end}}
     {{- range .Table.Columns }}
@@ -368,7 +368,7 @@ func TestUpsertWithPointer(t *testing.T){
         {{- range $index , $element := $tokens}}
             {{- $field = (print $field (title $element))}}
         {{- end}}
-        {{$field}} = time.Now().UTC().String()
+        {{$field}}: time.Now().UTC().String(),
         {{- end}}
     {{- end}}
     }
