@@ -17,6 +17,7 @@ import (
 	model "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
 	base "$PROJECT_PATH/$REPOSITORY_PATH"
 	"github.com/louvri/gosl/builder"
+    "time"
 )
 
 
@@ -256,4 +257,129 @@ func TestUpsert(t *testing.T) {
 		t.Log("data shouldn't be empty")
 		t.FailNow()
 	}
+}
+
+
+func TestUpsertWithPointer(t *testing.T){
+
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+    data := &model.Model{
+    {{- range .Table.Columns }}
+        {{- if eq .Type "bool"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = true
+        {{- end}}
+    {{- end}}  
+    {{- range .Table.Columns }}
+        {{- if eq .Type "int"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = 540
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "int32"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = 543
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "int64"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = 542
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "float32"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = 5.42
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "float64"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = 5.42
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "[]byte"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = []byte("testupsertpointer3")
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "string"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = "testupsertpointer2"
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "sql.NullString"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = "testupsertpointer1"
+        {{- end}}
+    {{- end}}
+    {{- range .Table.Columns }}
+        {{- if eq .Type "time.Time"}}
+        {{- $field := ""}}
+        {{- $tokens := split .Name "_"}}
+        {{- range $index , $element := $tokens}}
+            {{- $field = (print $field (title $element))}}
+        {{- end}}
+        {{$field}} = time.Now().UTC().String()
+        {{- end}}
+    {{- end}}
+    }
+    id, err := r.Upsert(nil, data)
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed to upsert")
+        t.FailNow()
+    }
 }
