@@ -16,7 +16,7 @@ import (
 
 const buildPath = "/tmp/.gen_gosl_build"
 
-var templates = []string{"helper", "model", "query", "query_test", "repository"}
+var templates = []string{"helper", "model", "query", "repository"}
 
 var instance Runner
 
