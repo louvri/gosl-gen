@@ -183,7 +183,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
 	} else if tmp, ok := model.(*db.Model); ok {
-		data = tmp.ToMap(nil)
+		data = tmp.ToMap(nil,true)
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
