@@ -89,7 +89,8 @@ func func TestGet(t *testing.T) {
 		t.Log(err.Error())
 		t.FailNow()
 	}
-    var data model.Model
+    // adjust your data here
+    data := model.Model{}
     id, err := r.Insert(ctx, data.ToMap(nil, true))
     if err != nil {
         t.Log(err.Error())
@@ -123,7 +124,8 @@ func TestAll(t *testing.T) {
 		t.FailNow()
 	}
 
-    var data model.Model
+    // adjust your data here
+    data := model.Model{}
     id, err := r.Insert(ctx, data.ToMap(nil, true))
     if err != nil {
         t.Log(err.Error())
@@ -157,7 +159,8 @@ func TestQuery(t *testing.T) {
 		t.FailNow()
 	}
 
-     var data model.Model
+     // adjust your data here
+    data := model.Model{}
     id, err := r.Insert(ctx, data.ToMap(nil, true))
     if err != nil {
         t.Log(err.Error())
@@ -191,7 +194,8 @@ func TestInsert(t *testing.T) {
 		t.FailNow()
 	}
 
-     var data model.Model
+     // adjust your data here
+    data := model.Model{}
     id, err := r.Insert(ctx, data.ToMap(nil, true))
     if err != nil {
         t.Log(err.Error())
@@ -225,7 +229,8 @@ func TestUpsert(t *testing.T) {
 		t.FailNow()
 	}
 
-     var data model.Model
+    // adjust your data here
+    data := model.Model{}
     id, err := r.Upsert(ctx, data.ToMap(nil, true))
     if err != nil {
         t.Log(err.Error())
