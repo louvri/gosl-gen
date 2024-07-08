@@ -86,7 +86,7 @@ func TestGet(t *testing.T) {
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
@@ -120,7 +120,7 @@ func TestAll(t *testing.T) {
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
@@ -155,7 +155,7 @@ func TestQuery(t *testing.T) {
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
@@ -190,7 +190,7 @@ func TestInsert(t *testing.T) {
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
@@ -225,7 +225,7 @@ func TestUpsert(t *testing.T) {
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
@@ -265,7 +265,7 @@ func TestUpsertWithPointer(t *testing.T){
     db := dbInt
 
 	// empty data
-	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+	if _, err := db.Exec("DELETE FROM {{$packageName}} WHERE id > ?", 1); err != nil {
 		t.Log(err.Error())
 		t.FailNow()
 	}
