@@ -182,8 +182,8 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 		data = tmp.ToMap(nil,true)
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
-	} else if tmp, ok := model.(*db.Model); ok {
-		data = tmp.ToMap(nil,true)
+	} else {
+		return 0, errors.New("invalid_object")
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
@@ -214,8 +214,8 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 		data = tmp.ToMap(nil)
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
-	} else if tmp, ok := model.(*db.Model); ok {
-		data = tmp.ToMap(nil)
+	} else {
+		return 0, errors.New("invalid_object")
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
@@ -252,8 +252,8 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 		data = tmp.ToMap(nil)
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
-	} else if tmp, ok := model.(*db.Model); ok {
-		data = tmp.ToMap(nil)
+	} else {
+		return 0, errors.New("invalid_object")
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
