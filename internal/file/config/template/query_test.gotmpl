@@ -1,0 +1,254 @@
+{{- $packageName := toLower .Table.Name }}
+package {{$packageName}}
+
+
+import (
+	"context"
+	"fmt"
+	"testing"
+	"time"
+
+	"github.com/go-kit/log"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
+	cloudRedis "github.com/louvri/gold/cloud_redis"
+	"github.com/louvri/gosl"
+	model "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
+	base "$PROJECT_PATH/$REPOSITORY_PATH"
+	"github.com/louvri/gosl/builder"
+)
+
+
+var r base.Repository
+var ctx context.Context
+var dbType = "mysql"
+var dbInt *sqlx.DB
+var err error
+
+type key int
+
+const NOSQL_KEY key = 1988
+
+
+
+func init() {
+	ctx = context.Background()
+
+	var logger log.Logger
+	r = New(logger)
+	switch dbType {
+	case "redis":
+		db, err := cloudRedis.New("localhost", "", "6379", time.Duration(48*60*60))
+		if err != nil {
+			panic(err)
+		}
+		ctx = context.WithValue(ctx, NOSQL_KEY, db)
+	case "pgsql":
+		user := "root"
+		password := "abcd"
+		dbname := "test"
+		host := "localhost"
+		port := 5432
+
+		// Construct the connection string
+		connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
+			user, password, dbname, host, port)
+
+		// Connect to the database using sqlx
+		dbInt, err = sqlx.Connect("postgres", connStr)
+		if err != nil {
+			panic(err)
+		}
+		ctx = context.WithValue(ctx, gosl.SQL_KEY, dbInt)
+	default:
+		dbInt, err = sqlx.Connect("mysql", fmt.Sprintf(
+			"%s:%s@(%s:%s)/%s",
+			"root",
+			"abcd",
+			"localhost",
+			"3306",
+			"test"))
+		if err != nil {
+			panic(err)
+		}
+		dbInt.SetMaxIdleConns(0)
+		dbInt.SetMaxOpenConns(0)
+		dbInt.SetConnMaxLifetime(0)
+		dbInt.SetConnMaxIdleTime(0)
+		ctx = context.WithValue(ctx, gosl.SQL_KEY, gosl.NewQueryable(dbInt))
+	}
+}
+
+
+func func TestGet(t *testing.T) {
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+    var data model.Model
+    id, err := r.Insert(ctx, data.ToMap(nil, true))
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed insert")
+        t.FailNow()
+    }
+
+    res, err := r.Get(ctx, builder.QueryParams{}, nil)
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+	if res == nil {
+		t.Log("data shouldn't be empty")
+		t.FailNow()
+	}
+}
+
+
+func TestAll(t *testing.T) {
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+    var data model.Model
+    id, err := r.Insert(ctx, data.ToMap(nil, true))
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed insert")
+        t.FailNow()
+    }
+
+    res, err := r.Get(ctx, builder.QueryParams{}, nil)
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+	if res == nil {
+		t.Log("data shouldn't be empty")
+		t.FailNow()
+	}
+}
+
+
+func TestQuery(t *testing.T) {
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+     var data model.Model
+    id, err := r.Insert(ctx, data.ToMap(nil, true))
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed insert")
+        t.FailNow()
+    }
+
+    res, err := r.Get(ctx, builder.QueryParams{}, nil)
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+	if res == nil {
+		t.Log("data shouldn't be empty")
+		t.FailNow()
+	}
+}
+
+
+func TestInsert(t *testing.T) {
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+     var data model.Model
+    id, err := r.Insert(ctx, data.ToMap(nil, true))
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed insert")
+        t.FailNow()
+    }
+
+    res, err := r.Get(ctx, builder.QueryParams{}, nil)
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+	if res == nil {
+		t.Log("data shouldn't be empty")
+		t.FailNow()
+	}
+}
+
+
+func TestUpsert(t *testing.T) {
+    db := dbInt
+
+	// empty data
+	if _, err := db.Exec("DELETE FROM test_table WHERE id > ?", 1); err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+     var data model.Model
+    id, err := r.Upsert(ctx, data.ToMap(nil, true))
+    if err != nil {
+        t.Log(err.Error())
+        t.FailNow()
+    }
+
+    if id < 1 {
+        t.Log("failed upsert")
+        t.FailNow()
+    }
+
+    res, err := r.Get(ctx, builder.QueryParams{
+		Object: model.Model{
+			Id: id,
+		},
+	}, nil)
+	if err != nil {
+		t.Log(err.Error())
+		t.FailNow()
+	}
+
+	if res == nil {
+		t.Log("data shouldn't be empty")
+		t.FailNow()
+	}
+}
