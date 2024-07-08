@@ -215,7 +215,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 	} else if tmp,ok := model.(map[string]interface{}); ok {
 		data = tmp
 	} else {
-		return 0, errors.New("invalid_object")
+		return errors.New("invalid_object")
 	}
 	for key, value := range data {
 		normalizedData[helper.ResolveColumnName(key)] = value
