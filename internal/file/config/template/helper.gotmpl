@@ -384,7 +384,7 @@ func normalize(params *helper.QueryParams) {
     }
 	tmp := make([]helper.Condition, 0)
 	for _, item := range params.Conditions {
-        if !strings.Contains(item.Key,"`"){
+        if !strings.Contains(item.Key,"`") && !strings.Contains(item.Key, "$.") {
 		    item.Key = helper.ResolveColumnName(item.Key)
         }
         tmp = append(tmp, item)
