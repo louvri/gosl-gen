@@ -518,7 +518,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 				level.Debug(i.logger).Log("{{- $packageName}}:repository:update", i.shortener.Decode(i.key))
 				return err
 			}
-			return rows.LastInsertId(), nil
+			return rows.LastInsertId()
 		} else {
 			return errors.New("prepared statement is not set properly")
 		}
