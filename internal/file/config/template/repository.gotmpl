@@ -8,13 +8,19 @@ import (
 )
 
 type Repository interface {
-	Get(ctx context.Context, param helper.QueryParams, priorities []string, trans ...transformer.Transformer) (interface{}, error)
-	All(ctx context.Context, param helper.QueryParams, priorities []string, trans ...transformer.Transformer) (interface{}, error)
-	Set(ctx context.Context, model interface{}) (int64, error)
-	Query(ctx context.Context, params []helper.QueryParams, priorities []string, trans ...transformer.Transformer) (interface{}, error)
-	Count(ctx context.Context, params []helper.QueryParams, priorities []string) (total int, err error)
-	Insert(ctx context.Context, object interface{}) (int64, error)
-	Update(ctx context.Context, model interface{}, params helper.QueryParams, priorities []string) error
-	Upsert(ctx context.Context, model interface{}) (int64, error)
-	Delete(ctx context.Context, params helper.QueryParams, priorities ...string) error
+	Get(ctx context.Context, param helper.QueryParams,trans ...transformer.Transformer) (*db.Model,error)
+	All(ctx context.Context, param helper.QueryParams, trans ...transformer.Transformer) ([]db.Model,error)
+	Set(ctx context.Context, model interface{}) (int64,error)
+	Query(ctx context.Context, params []helper.QueryParams, trans ...transformer.Transformer) ([]db.Model,error)
+	PrepareQuery(ctx context.Context, params []helpers.QueryParams)
+	Count(ctx context.Context, params []helper.QueryParams) (total int, err error)
+	PrepareCount(ctx context.Context, params []helpers.QueryParams)
+	Insert(ctx context.Context, model interface{}) (int64,error)
+	PrepareInsert(ctx context.Context, model interface{}) error
+	Update(ctx context.Context, model interface{}, params helper.QueryParams) error
+	PrepareUpdate(ctx context.Context, model inteface{}, params helper.QueryParams) error
+	Upsert(ctx context.Context, model interface{}) (int64,error)
+	PrepareUpsert(ctx context.Context, model interface{})
+	Delete(ctx context.Context, params helper.QueryParams) error
+	PrepareDelete(ctx context.Context, params helper.QueryParams)
 }

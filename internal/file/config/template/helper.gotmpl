@@ -134,7 +134,8 @@ func buildIndex(params helper.QueryParams) map[string][]map[string]interface{} {
     return statements
 }
 
-func buildStatement(statement helper.Builder, params helper.QueryParams, priorities []string) helper.Builder {
+func buildStatement(statement helper.Builder, params helper.QueryParams) helper.Builder {
+    var priorities []string
     priorityIndex := make(map[string]bool)
     stmts := buildIndex(params) 
     build := func(data map[string]interface{}) {
@@ -217,8 +218,10 @@ func buildStatement(statement helper.Builder, params helper.QueryParams, priorit
 
         }         
     }
-    if priorities == nil {
+    if len(params.Priority) == 0 {
        priorities = make([]string,0)
+    } else {
+       priorities = params.Priority
     }
     if len(priorities) == 0 {
             duplicate := make(map[string]bool)
@@ -290,10 +293,10 @@ func buildStatement(statement helper.Builder, params helper.QueryParams, priorit
     return statement
 }
 
-func buildQuery(params helper.QueryParams, key string, operation helper.MergeOperation, tracks []interface{},priorities []string,shouldSort ...bool) helper.Builder{
+func buildQuery(params helper.QueryParams, key string, operation helper.MergeOperation, tracks []interface{},shouldSort ...bool) helper.Builder{
     q := helper.New()
     q = q.From("{{- $packageName}}")
-    q = buildStatement(q,params,priorities)
+    q = buildStatement(q,params)
     if len(shouldSort) == 0 || len(shouldSort) > 0 && shouldSort[0] {
         if params.Next != 0 {
             _, nWhere, _ := q.Status()
@@ -307,7 +310,10 @@ func buildQuery(params helper.QueryParams, key string, operation helper.MergeOpe
                     Value:    params.Next,
                 },
             })
-            q = q.Order(key, "asc")
+            q = q.Order(helper.OrderBy{
+                Column: key,
+                Direction: "asc",
+            })
         } else {
             if params.Page != 0 {
                 q = q.Page(params.Page)
@@ -315,7 +321,10 @@ func buildQuery(params helper.QueryParams, key string, operation helper.MergeOpe
             if len(params.Orderby) > 0 {
                 q = q.Orders(params.Orderby)
             } else {
-                q = q.Order(key, "asc")
+                q = q.Order(helper.OrderBy{
+                    Column: key,
+                    Direction: "asc",
+                })
             }
         }
     }
@@ -372,23 +381,139 @@ func buildQuery(params helper.QueryParams, key string, operation helper.MergeOpe
     return q
 }
 
+func extractFromStatement(){
+    out := make([]interface{},0)
+    extract := func (data map[string]interface{}) {
+        for action, parameters := range data {
+            switch action {
+                case "betweenTime":{
+                    for key,values := range parameters.(map[string][]time.Time) {
+                        for _,v := range value {
+                            out = append(out,v)
+                        }
+                    }
+                }
+                case "custom":{
+                    cond, ok := parameters.(helper.Condition)
+                    if cond.Value != nil {
+                            out = append(out,cond.Value)
+                    }
+                }
+                default: {
+                    for key,values := range parameters.(map[string]interface{}) {
+                       for _,v := range values {
+                            out = append(out,v)
+                       }
+                    }   
+                }
+            }
+        }
+    }
+    var priorities []string
+    stmts := buildIndex(params) 
+    if len(params.Priority) == 0 {
+        priorities = make([]string,0)
+    } else {
+        priorities = params.Priority
+    }
+    if len(priorities) == 0 {
+        duplicate := make(map[string]bool)
+        {{- range .Table.PrimaryKeys }}
+            {{- $objectProperty := ""}}            
+            {{- $tokens := split .Name "_"}}
+                {{- range $index , $element := $tokens}}
+                    {{- if eq $index 0 }} 
+                            {{- $objectProperty = (print $objectProperty $element)}} 
+                    {{- else }}
+                            {{- $objectProperty = (print $objectProperty (title $element))}} 
+                    {{- end }}
+                {{- end}}
+                if !duplicate["{{$objectProperty}}"] {
+                    priorities = append (priorities, "{{$objectProperty }}")
+                    duplicate["{{$objectProperty}}"] = true
+                }
+        {{- end }}    
+        {{- range .Table.Indexes}}
+                {{- range .Columns}}
+                    {{- $indexName := ""}}
+                    {{- $tokens := split .Name "_"}}
+                    {{- range $index , $element := $tokens}}
+                        {{- if eq $index 0 }} 
+                                {{- $indexName = (print $indexName $element)}} 
+                        {{- else }}
+                                {{- $indexName = (print $indexName (title $element))}} 
+                        {{- end }}
+                    {{- end}}
+                    {{- $exists := false }}
+                    {{- range .Table.PrimaryKeys }}
+                        {{- $primaryName := ""}}            
+                        {{- $tokens := split .Name "_"}}
+                            {{- range $index , $element := $tokens}}
+                                {{- if eq $index 0 }} 
+                                        {{- $primaryName = (print $primaryName $element)}} 
+                                {{- else }}
+                                        {{- $primaryName = (print $primaryName (title $element))}} 
+                                {{- end }}
+                            {{- end}}
+                            {{- if eq $primaryName $indexName }}
+                                {{- $exists = true }}
+                            {{- end }}
+                    {{- end}}
+                    {{- if eq $exists false }}
+                        if !duplicate["{{$indexName}}"] {
+                            priorities = append (priorities, "{{$indexName}}")
+                            duplicate["{{$indexName}}"] = true
+                        }
+                    {{- end }}
+                {{- end }}
+            {{- end }}
+    }
+    for _,priority := range priorities {
+        priorityIndex[priority] = true
+        for _,stmt := range stmts[priority] {
+            extract(stmt)
+        }
+    }
+    for key,ops := range stmts {
+        if priorityIndex[key] {
+            continue
+        }
+        for _,stmt := range ops {
+            extract(stmt)
+        }
+    }
+    return out
+}
+
 func normalize(params *helper.QueryParams) {
 	params.In = helper.ResolveColumnNameMap(params.In)
 	params.Notin = helper.ResolveColumnNameMap(params.Notin)
 	params.BetweenTime = helper.ResolveColumnNameMapInTime(params.BetweenTime)
 	params.ColumnFilter = helper.ResolveColumnNameCollections(params.ColumnFilter)
-	params.Orderby = helper.ResolveColumnNameMap(params.Orderby)
     params.Groupby = helper.ResolveColumnNameCollections(params.Groupby)
     if params.Merge != nil {
         params.Merge.Track = helper.ResolveColumnName(params.Merge.Track)
     }
-	tmp := make([]helper.Condition, 0)
+	conditions := make([]helper.Condition, 0)
 	for _, item := range params.Conditions {
         if !strings.Contains(item.Key,"`") && !strings.Contains(item.Key, "'$.") {
 		    item.Key = helper.ResolveColumnName(item.Key)
         }
-        tmp = append(tmp, item)
+        conditions = append(tmp, item)
 	}
+    orderby := make([]params.OrderBy,0)
+    for _,item := range params.OrderBy {
+        if !strings.Contains(item.Key,"`") && !strings.Contains(item.Key, "'$.") {
+		    item.Column = helper.ResolveColumnName(item.Column)
+        }
+        if db.TypeFor(item.Column) == "string" && len(item.Fields) > 0 {
+           reformat := make([]string,0)
+           for _,val := range item.Fields {
+                reformat = append(reformat,fmt.Sprintf("\'%s\',val))
+           }
+           item.Fields = reformat
+        }
+    }
 	params.Conditions = tmp
 }
 

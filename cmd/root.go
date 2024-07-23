@@ -29,42 +29,25 @@ func Execute() error {
 
 func init() {
 	cfg := ""
-	var initCmd = &cobra.Command{
-		Use:   "init",
-		Short: "initialize gosl powered project",
-		Long:  `create & copy all necessary files required by gosl to run in the project`,
-		Run: func(cmd *cobra.Command, args []string) {
-			if cfg != "" {
-				runner := process.New()
-				err := runner.Initialize(cfg)
-				if err != nil {
-					fmt.Printf("initialization failed %v\n", err)
-				}
-			} else {
-				fmt.Println("config is not set")
-			}
-
-		},
-	}
 	var genCmd = &cobra.Command{
-		Use:   "gen",
+		Use:   "",
 		Short: `generate golang helper library at host project`,
 		Long:  `generate model, helper, and query golang modules. Built based on the stored configs`,
 		Run: func(cmd *cobra.Command, args []string) {
 			runner := process.New()
-			if err := runner.IsInitiated(); err == nil {
-				err := runner.Generate(cfg)
-				if err != nil {
-					fmt.Printf("gosl-gen failed %v\n", err)
-				} else {
-					fmt.Println("gosl is generated")
-				}
+			if err := runner.Initialize(cfg); err != nil {
+				fmt.Printf("gosl-gen init failed %v\n", err)
 			} else {
-				fmt.Println(err.Error())
+				fmt.Println("gosl is initiated")
 			}
+			if err := runner.Generate(cfg); err != nil {
+				fmt.Printf("gosl-gen gen failed %v\n", err)
+			} else {
+				fmt.Println("gosl is generated")
+			}
+
 		},
 	}
 	rootCmd.PersistentFlags().StringVarP(&cfg, "config", "c", "", "config file")
-	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(genCmd)
 }

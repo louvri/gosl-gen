@@ -137,6 +137,33 @@ type Model struct {
 {{- end}}
     Defaults map[string]interface{}
 }
+func TypeFor(field string) string{
+    {{- range .Table.Columns }}
+           if field == "{{- .Name}}" {
+                return "{{- .Type}}
+           } 
+    {{- end }} 
+    return ""
+}
+
+func Columns(filter ...string) []string{ 
+     columns := make([]string,0)
+     index := make(map[string]string)
+     {{- range .Table.Columns }}
+            {{- $field := ""}}
+                {{- $tokens := split .Name "_"}}
+                {{- range $index, $element := $tokens}}
+                    {{- $field = (print $field (title $element))}}
+            {{- end}}
+            index["{{- $field}}"] = ".Name"
+     {{- end}}
+     for _,item := range field {
+        if index[item] != "" {
+            columns = append(columns,index[item])
+        }
+     }
+     return columns
+}
 
 func (m *Model) SetDefaults(defaults map[string]interface{}){
     m.Defaults = defaults
@@ -151,10 +178,12 @@ func (m *Model) Get(field string) interface{}{
                     {{- $field = (print $field (title $element))}}
                 {{- end}}
                 case "{{- .Name}}","{{- $field}}": return m.{{- $field}}
-         {{- end}}
+         {{- end }}
     }
     return nil
 }
+
+
 
 func (m *Model) Patch(data Model) {
     {{- range .Table.Columns }}
