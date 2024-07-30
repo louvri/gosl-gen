@@ -1,3 +1,4 @@
 build
 .vscode
 .gen_gosl_build
+gosl-gen

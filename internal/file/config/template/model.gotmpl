@@ -1,13 +1,19 @@
 {{- $packageName := toLower .Table.Name }}
 package {{ $packageName}} 
 {{- $shouldImportSql := false }}
+{{- $onlyString := true }}
 {{- range .Table.Columns }}
+    {{- if ne .Type "string" }}
+        {{- $onlyString = false }}
+    {{- end}}
     {{- if eq .Type "sql.NullTime" }}
         {{- $shouldImportSql = true }}
     {{- end }}
 {{- end }}
 import (
+    {{- if eq $onlyString false }}
 	"fmt"
+    {{- end}}
 	"strings"
     {{- if eq $shouldImportSql true }}
         "database/sql"
@@ -140,7 +146,7 @@ type Model struct {
 func TypeFor(field string) string{
     {{- range .Table.Columns }}
            if field == "{{- .Name}}" {
-                return "{{- .Type}}
+                return "{{- .Type}}"
            } 
     {{- end }} 
     return ""
@@ -157,7 +163,7 @@ func Columns(filter ...string) []string{
             {{- end}}
             index["{{- $field}}"] = ".Name"
      {{- end}}
-     for _,item := range field {
+     for _,item := range filter {
         if index[item] != "" {
             columns = append(columns,index[item])
         }
@@ -398,7 +404,11 @@ func (m *Model) ToMapWithFilter(builder map[string]interface{},filter []string,d
                 {{- $objectProperty := ""}}
                 {{- $tokens := split .Name "_" }}
                 {{- range $index, $element := $tokens }}
-                    {{- $field = (print $field $element)}}
+                    {{- if eq $index 0 }}
+                        {{- $field = (print $field $element)}}
+                    {{- else }}
+                        {{- $field = (print $field (title $element))}}
+                    {{- end }}
                     {{- $objectProperty = (print $objectProperty (title $element))}}
                 {{- end }}
                 case "{{- $field}}":
@@ -530,7 +540,11 @@ func (m *Model) ToStringWithFilter(builder *strings.Builder, filter []string, in
             {{- $objectProperty := ""}}
             {{- $tokens := split .Name "_" }}
             {{- range $index, $element := $tokens }}
-                {{- $field = (print $field $element)}}
+                {{- if eq $index 0 }}
+                    {{- $field = (print $field $element)}}
+                {{- else }}
+                    {{- $field = (print $field (title $element))}}
+                {{- end }}
                 {{- $objectProperty = (print $objectProperty (title $element))}}
             {{- end }}
             case "{{- $field}}":

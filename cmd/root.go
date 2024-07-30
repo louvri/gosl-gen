@@ -30,7 +30,7 @@ func Execute() error {
 func init() {
 	cfg := ""
 	var genCmd = &cobra.Command{
-		Use:   "",
+		Use:   "compile",
 		Short: `generate golang helper library at host project`,
 		Long:  `generate model, helper, and query golang modules. Built based on the stored configs`,
 		Run: func(cmd *cobra.Command, args []string) {

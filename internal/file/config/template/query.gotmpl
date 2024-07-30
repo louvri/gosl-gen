@@ -3,6 +3,7 @@ package {{$packageName}}
 
 import (
     "context"
+	"fmt"
 	"errors"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -12,53 +13,50 @@ import (
 	base "$PROJECT_PATH/$REPOSITORY_PATH"
     db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
 	"github.com/louvri/gosl/transformer"
-	helper "github.com/louvri/gosl/builder"
+	"github.com/louvri/gosl/builder"
 	"github.com/jmoiron/sqlx"
-	"github.com/leonardoeloy/bijectiv"
 )
 
 type repository struct {
 	logger log.Logger
 	stmts map[string]map[string]interface{}
-	shortener *bijective.Bijective
 }
 
 func New(logger log.Logger) base.Repository {
 	return &repository{
 		logger: logger,
-		stmts: make(map[string]map[string]map[string]interface{}),
-		shortener: bijective.New(),
+		stmts: make(map[string]map[string]interface{}),
 	}
 }
 
-func (i *repository) Get(ctx context.Context, param helper.QueryParams,trans ...transformer.Transformer) (*db.Model,error) {
-	var response []db.Model 
+func (i *repository) Get(ctx context.Context, param builder.QueryParams,trans ...transformer.Transformer) (interface{},error) {
+	var response interface{}
 	var err error
 	if len (trans) > 0 {
-		response,error = i.Query(ctx,[]helper.QueryParams{param},trans[0])
+		response,err = i.Query(ctx,[]builder.QueryParams{param},trans[0])
 	} else {
-		response,error = i.Query(ctx,[]helper.QueryParams{param})
+		response,err = i.Query(ctx,[]builder.QueryParams{param})
 	}
-	if len(response)>0 {
-		return response[0], err
+	if tmp,ok := response.([]db.Model); ok && len(tmp)>0 {
+		return &tmp[0], err
 	} else{
 		return nil, err
 	}
 }
 
-func (i *repository) All(ctx context.Context, param helper.QueryParams, trans ...transformer.Transformer) ([]db.Model,error) {
+func (i *repository) All(ctx context.Context, param builder.QueryParams, trans ...transformer.Transformer) (interface{},error) {
 	if len(trans) > 0 {
-		return i.Query(ctx,[]helper.QueryParams{param},trans[0])
+		return i.Query(ctx,[]builder.QueryParams{param},trans[0])
 	}
-	return i.Query(ctx,[]helper.QueryParams{param},trans...)
+	return i.Query(ctx,[]builder.QueryParams{param},trans...)
 }
 
 func (i *repository) Set(ctx context.Context, model interface{}) (int64,error) {
 	return i.Upsert(ctx,model)
 }
 
-func (i *repository) Query(ctx context.Context, params []helper.QueryParams, trans ...transformer.Transformer) ([]db.Model,error) {
-	read := func (rows *sqlx.Rows) (*db.Model, error){
+func (i *repository) Query(ctx context.Context, params []builder.QueryParams, trans ...transformer.Transformer) (interface{},error) {
+	read := func (rows *sqlx.Rows, indexedfilter map[string]bool) (*db.Model, error){
 		result, err := scan(rows, indexedfilter)
 		if err != nil && err != _sql.ErrNoRows {
 			return nil, err
@@ -70,13 +68,13 @@ func (i *repository) Query(ctx context.Context, params []helper.QueryParams, tra
 				if trans[0].Transform != nil {
 					out, err = trans[0].Transform(*result)
 					if err != nil {
-						return err
+						return nil,err
 					}
 				}
 				if trans[0].Store != nil {
 					err = trans[0].Store(out)
 					if err != nil {
-						return err
+						return nil,err
 					}
 				}
 			}
@@ -84,44 +82,46 @@ func (i *repository) Query(ctx context.Context, params []helper.QueryParams, tra
 		return result, nil
 	}
 	if len(params) == 0 {
-		params = make([]helper.QueryParams,0)
-		params = append(params,helper.QueryParams{
-			Merge: helper.Merge{
-				Operation: helper.Statement,
+		params = make([]builder.QueryParams,0)
+		params = append(params,builder.QueryParams{
+			Merge: &builder.Merge{
+				Operation: builder.Statement,
 			},
 		})
 	}
 	response := make([]db.Model,0)
 	if i.stmts["query+0"] != nil || i.stmts["query"] != nil{	
-		for i,param := range params {
-			if cfg, ok := i.stmts[fmt.Sprintf("query+%d",i)].(map[string]interface{}); ok {
+		for idx,param := range params {
+			if cfg := i.stmts[fmt.Sprintf("query+%d",idx)]; len(cfg) > 0 {
 				stmt,ok := cfg["statement"].(*sqlx.Stmt)
 				if !ok {
 					return -1, errors.New("prepared statement is not set properly")
 				}
 				var err error
 				var rows *sqlx.Rows 
-				if tmp := extractFromStatement(param); len(tmp) > 0 {
+				normalize(&param)
+				if tmp := extract(param); len(tmp) > 0 {
 					rows, err = stmt.QueryxContext(ctx, tmp...)
 				} else{
 					rows, err = stmt.QueryxContext(ctx) 
 				}
 				if err != nil {
 					level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-					level.Debug(i.logger).Log("{{- $packageName}}:repository:query", i.shortener.Decode(i.key))
+					level.Debug(i.logger).Log("{{- $packageName}}:repository:query", cfg["key"])
 					return nil, err
 				}
+				indexedfilter := arr.Index(param.ColumnFilter)
 				defer rows.Close()
 				for rows.Next(){ 
-					result, err := read(rows,operation)
+					result, err := read(rows,indexedfilter)
 					if err != nil {
 						level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 						return nil,err
-					}else if len(transformer) == 0) {
+					}else if len(trans) == 0 {
 					   response = append(response,*result)	
 					}
 				}
-				if param.ShouldContinue != nil && !param.ShouldContinue(response) {
+				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(response) {
 					break
 				}
 			} else {
@@ -129,6 +129,7 @@ func (i *repository) Query(ctx context.Context, params []helper.QueryParams, tra
 			}
 		}
 	} else {
+		var err error
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
 			err = errors.New("database is not initialized")
@@ -136,49 +137,61 @@ func (i *repository) Query(ctx context.Context, params []helper.QueryParams, tra
 			return nil,err
 		}
 		queryable := ref.(*sql.Queryable)
-		tracks := make([]interface{}, 0)
 		{{- $primary_key := ""}}
 		{{- range .Table.PrimaryKeys }}
 			{{- $primary_key = .Name}}
 		{{- end}}
+		tracks := make([]interface{}, 0)
 		key := "{{- $primary_key }}"
-		operation := helper.Statement
+		operation := builder.Statement
+		shouldMerge := len(params) > 1
 		for _, param := range params {
-				if param.Merge != nil {
-					if param.Merge.Track != "" {
-						key = param.Merge.Track
-					}
-					if param.Merge.Operation != "" {
-						operation = param.Merge.Operation 
-					}
+			if param.Merge != nil {
+				if param.Merge.Track != "" {
+					key = param.Merge.Track
 				}
-				normalize(&param)
-				indexedfilter := arr.Index(param.ColumnFilter)
-				q := buildQuery(param,key,operation,tracks)
-				if param.IsDistinct {
-					q = q.Select("DISTINCT " + buildSelection(indexedfilter))
-				} else {
-					q = q.Select(buildSelection(indexedfilter))
-				}
-				stmt, values := q.Build()
-				rows, err := queryable.QueryxContext(ctx, stmt, values...)
-				if err != nil && err != _sql.ErrNoRows {
-					level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-					return nil,err
-				}
-				result, err := read(rows,operation)
+				operation = param.Merge.Operation 
+			}
+			normalize(&param)
+			indexedfilter := arr.Index(param.ColumnFilter)
+			q := builder.New()
+			q = q.From("{{- $packageName}}")
+			q = q.Page(param.Page)
+			q = q.Groups(param.Groupby)
+			q = q.Size(param.Size)
+			q = q.Orders(param.Orderby)
+			if param.IsDistinct {
+				q = q.Select("DISTINCT " + buildSelection(indexedfilter))
+			} else {
+				q = q.Select(buildSelection(indexedfilter))
+			}
+			q = next(q,param,key,tracks)
+			q = where(q,param)
+			values := make([]interface{},0)
+			stmt, values := q.Build()
+			rows, err := queryable.QueryxContext(ctx, stmt, values...)
+			if err != nil && err != _sql.ErrNoRows {
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+				return nil,err
+			}
+			defer rows.Close()
+			for rows.Next() {
+				result, err := read(rows,indexedfilter)
 				if err != nil {
 					level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 					return nil,err
-				} else if len(transformer) == 0 {
+				} else if len(trans) == 0 {
 					response = append(response,*result)
 				}
-				if operation == helper.Statement {
-					tracks = append(tracks, query)
-				} else if helper.Identifier == operation {
-					tracks  = track(tracks,*result,key)
+				if shouldMerge && builder.Identifier == operation {
+					tracks  = append(tracks, result.Get(key))
 				}
-				if param.ShouldContinue != nil && !param.ShouldContinue(response) {
+			}
+			if shouldMerge {
+				if operation == builder.Statement {
+					tracks = append(tracks, stmt)
+				}
+				if param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(response) {
 					break
 				}
 			}
@@ -187,89 +200,96 @@ func (i *repository) Query(ctx context.Context, params []helper.QueryParams, tra
 	return response,nil
 }
 
-func (i *repository) PrepareQuery(ctx context.Context, params []helpers.QueryParams) {
+func (i *repository) PrepareQuery(ctx context.Context, params []builder.QueryParams) error{
 	var err error
 	ref := ctx.Value(sql.SQL_KEY)
 	if ref == nil {
 		err = errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-		return nil,err
+		return err
 	}
 	queryable := ref.(*sql.Queryable)
 	if len(params) > 0 && i.stmts["query+0"] == nil{
-		tracks := make([]interface{}, 0)
 		{{- $primary_key := ""}}
 		{{- range .Table.PrimaryKeys }}
 			{{- $primary_key = .Name}}
 		{{- end}}
+		tracks := make([]interface{}, 0)
 		key := "{{- $primary_key }}"
-		operation := helper.Statement
-		for i, param := range params {
+		operation := builder.Statement
+		shouldMerge := len(params) > 1
+		for idx, param := range params {
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
-				if param.Merge.Operation != "" {
-					operation = param.Merge.Operation 
-				}
+				operation = param.Merge.Operation 
 			}
 			normalize(&param)
 			indexedfilter := arr.Index(param.ColumnFilter)
-			q := buildQuery(param,key,operation,tracks)
+			q := builder.New()
+			q = q.From("{{- $packageName}}")
+			q = q.Page(param.Page)
+			q = q.Groups(param.Groupby)
+			q = q.Size(param.Size)
+			q = q.Orders(param.Orderby)
 			if param.IsDistinct {
 				q = q.Select("DISTINCT " + buildSelection(indexedfilter))
 			} else {
 				q = q.Select(buildSelection(indexedfilter))
 			}
+			q = next(q,param,key,tracks)
+			q = where(q,param)
 			query, _ := q.Build()
-			statement, err := queryable.Prepare(query)
+			statement, err := queryable.Preparex(query)
 			if err != nil {
 			   level.Error(i.logger).Log("{{- $packageName}}:repository:prepareQuery", err.Error())
 			   return err
 			}
-			i.stmts[fmt.Sprintf("query+%d",i)] = map[string]interface{}{
+			i.stmts[fmt.Sprintf("query+%d",idx)] = map[string]interface{}{
 				"statement": statement,
-				"key": i.shortener.Encode(query),
+				"key": query,
 			}
-			if operation == helper.Statement {
+			if shouldMerge && operation == builder.Statement {
 				tracks = append(tracks, query)
 			}
 		}
 	} else if i.stmts["query"] == nil {
-		q := helper.New()
+		q := builder.New()
 		q = q.From("{{- $packageName}}")
-		q = q.Select(buildSelection(indexedfilter))
+		q = q.Select(buildSelection(map[string]bool{}))
 		query, _ := q.Build()
-		statement, err := queryable.Prepare(query)
+		statement, err := queryable.Preparex(query)
 		if err != nil {
 			level.Error(i.logger).Log("{{- $packageName}}:repository:prepareQuery", err.Error())
 			return err
 		}
 		i.stmts["query"] = map[string]interface{}{
 			"statement": statement,
-			"key": i.shortener.Encode(query),
+			"key": query,
 		}
 	}
+	return nil
 }
 
-func (i *repository) Count(ctx context.Context, params []helper.QueryParams) (total int, err error) {
+func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (total int, err error) {
 	if i.stmts["count+0"] != nil || i.stmts["count"] !=nil {
-		for i,param := range params {
-			if cfg,ok := i.stmts[fmt.Sprintf("count+%d",i)].(map[string]interface{}); ok {
+		for idx,param := range params {
+			if cfg := i.stmts[fmt.Sprintf("count+%d",idx)]; len(cfg) > 0 {
 				stmt,ok := cfg["statement"].(*sqlx.Stmt)
 				if !ok {
 					return -1, errors.New("prepared statement is not set properly")
 				}
 				var err error
 				var row *sqlx.Row
-				if tmp := extractFromStatement(param); len(tmp) > 0 {
-					row, err = stmt.QueryRowContext(ctx, tmp...)
+				normalize(&param)
+				if tmp := extract(param); len(tmp) > 0 {
+					row = stmt.QueryRowxContext(ctx, tmp...)
 				} else {
-					row, err = stmt.QueryRowContext(ctx)
+					row = stmt.QueryRowxContext(ctx)
 				}
-				if err != nil {
-					level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
-					level.Debug(i.logger).Log("{{- $packageName}}:repository:count", i.shortener.Decode(i.key))
+				if row == nil {
+					level.Debug(i.logger).Log("{{- $packageName}}:repository:count", cfg["key"])
 					return -1, err
 				}
 				var count int
@@ -278,7 +298,7 @@ func (i *repository) Count(ctx context.Context, params []helper.QueryParams) (to
 					return -1, err
 				}
 				total = total + count
-				if param.ShouldContinue != nil && !param.ShouldContinue(response) {
+				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(total) {
 					break
 				}
 			} else {
@@ -293,38 +313,41 @@ func (i *repository) Count(ctx context.Context, params []helper.QueryParams) (to
 			return -1, err
 		}
 		queryable := ref.(*sql.Queryable)
-		tracks := make([]interface{}, 0)
 		{{- $db_primary_key := ""}}
 		{{- range .Table.PrimaryKeys }}
 			{{- $db_primary_key = .Name}}
 		{{- end}}
-		key := "{{- $db_primary_key }}"
-		operation := helper.Statement
+		tracks := make([]interface{}, 0)
+		key := "{{- $primary_key }}"
+		operation := builder.Statement
+		shouldMerge := len(params) > 1
 		for _, param := range params {
-				if param.Merge != nil {
-					if param.Merge.Track != "" {
-						key = param.Merge.Track
-					}
-					if param.Merge.Operation != "" {
-						operation = param.Merge.Operation 
-					}
+			if param.Merge != nil {
+				if param.Merge.Track != "" {
+					key = param.Merge.Track
 				}
-				normalize(&param)
-				indexedfilter := arr.Index(param.ColumnFilter)
-				q := buildQuery(param,key,operation,tracks)
-				q = q.Select("COUNT({{- $db_primary_key}}) as total")
-				stmt, values := q.Build()
-				row :=  queryable.DB().QueryRowContext(ctx, stmt, values...)
-				var count int
-				err = row.Scan(&count)
-				if err != nil && err != _sql.ErrNoRows {
-					return -1, err
+				operation = param.Merge.Operation 
+			}
+			normalize(&param)
+			q := builder.New()
+			q = q.From("{{- $packageName}}")
+			q = q.Select("COUNT({{- $db_primary_key}}) as total")
+			q = next(q,param,key,tracks)
+			q = where(q,param)
+			
+			stmt, values := q.Build()
+			row :=  queryable.DB().QueryRowContext(ctx, stmt, values...)
+			var count int
+			err = row.Scan(&count)
+			if err != nil && err != _sql.ErrNoRows {
+				return -1, err
+			}
+			total = total + count
+			if shouldMerge{
+				if operation == builder.Statement {
+					tracks = append(tracks, stmt)
 				}
-				if operation == helper.Statement {
-					tracks = append(tracks, query)
-				}
-				total = total + count
-				if param.ShouldContinue != nil && !param.ShouldContinue(response) {
+				if param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(count) {
 					break
 				}
 			}
@@ -334,83 +357,79 @@ func (i *repository) Count(ctx context.Context, params []helper.QueryParams) (to
 }
 
 
-func (i *repository) PrepareCount(ctx context.Context, params []helpers.QueryParams) {
+func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryParams) error{
 	var err error
 	ref := ctx.Value(sql.SQL_KEY)
 	if ref == nil {
 		err = errors.New("database is not initialized")
 		level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-		return nil,err
+		return err
 	}
 	queryable := ref.(*sql.Queryable)
 	if len(params) > 0 && i.stmts["count+0"] == nil{
-		tracks := make([]interface{}, 0)
-		{{- $primary_key := ""}}
+		{{- $db_primary_key := ""}}
 		{{- range .Table.PrimaryKeys }}
-			{{- $primary_key = .Name}}
+			{{- $db_primary_key = .Name}}
 		{{- end}}
+		tracks := make([]interface{}, 0)
 		key := "{{- $primary_key }}"
-		operation := helper.Statement
-		for i, param := range params {
+		operation := builder.Statement
+		shouldMerge := len(params) > 1
+		for idx, param := range params {
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
-				if param.Merge.Operation != "" {
-					operation = param.Merge.Operation 
-				}
+				operation = param.Merge.Operation 
 			}
 			normalize(&param)
-			indexedfilter := arr.Index(param.ColumnFilter)
-			q := buildQuery(param,key,operation,tracks)
+			q := builder.New()
+			q = q.From("{{- $packageName}}")
 			q = q.Select("COUNT({{- $db_primary_key}}) as total")
+			q = where(q,param)
+			q = next(q,param,key,tracks)
 			query, _ := q.Build()
-			statement, err := queryable.Prepare(query)
+			statement, err := queryable.Preparex(query)
 			if err != nil {
 			   level.Error(i.logger).Log("{{- $packageName}}:repository:prepareQuery", err.Error())
 			   return err
 			}
-			i.stmts[fmt.Sprintf("count+%d",i)] = map[string]interface{}{
+			i.stmts[fmt.Sprintf("count+%d",idx)] = map[string]interface{}{
 				"statement": statement,
-				"key": i.shortener.Encode(query),
+				"key": query,
 			}
-			if operation == helper.Statement {
+			if shouldMerge && operation == builder.Statement {
 				tracks = append(tracks, query)
 			}
 		}
 	} else if i.stmts["count"] == nil{
-		q := helper.New()
+		q := builder.New()
 		q = q.From("{{- $packageName}}")
 		q = q.Select("COUNT({{- $db_primary_key}}) as total")
 		query, _ := q.Build()
-		statement, err := queryable.Prepare(query)
+		statement, err := queryable.Preparex(query)
 		if err != nil {
 			level.Error(i.logger).Log("{{- $packageName}}:repository:prepareQuery", err.Error())
 			return err
 		}
 		i.stmts["count"] = map[string]interface{}{
 			"statement": statement,
-			"key": i.shortener.Encode(query),
+			"key": query,
 		}
 	}
+	return nil
 }
 
 //insert: insert data with default value, use map to include nil value
 func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error) {
-	normalizedData := make(map[string]interface{})
-	if tmp, ok := model.(db.Model) ; ok {
-		data := tmp.ToMap(nil,true)
-		normalizedData = data
-	} else if tmp,ok := model.(map[string]interface{}); ok {
-		data := tmp
-		for key, value := range data {
-			normalizedData[helper.ResolveColumnName(key)] = value
-		}
+	var normalizedData map[string]interface{} 
+	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		normalizedData = tmp
 	} else {
 		return 0, errors.New("invalid_object")
 	}
 	if i.stmts["insert"] != nil {
-		if cfg, ok := i.stmts["insert"].(map[string]interface{}); ok {
+		if cfg := i.stmts["insert"]; len(cfg) > 0 {
 			stmt,ok := cfg["statement"].(*sqlx.Stmt)
 			if !ok {
 				return -1, errors.New("prepared statement is not set properly")
@@ -422,7 +441,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 			rows, err := stmt.ExecContext(ctx,tobeInserted)
 			if err != nil {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:insert", err.Error())
-				level.Debug(i.logger).Log("{{- $packageName}}:repository:insert", i.shortener.Decode(i.key))
+				level.Debug(i.logger).Log("{{- $packageName}}:repository:insert",cfg["key"])
 				return -1, err
 			}
 			return rows.LastInsertId()
@@ -437,7 +456,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 			return -1,err
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Insert(normalizedData)
 		query, values := q.Build()
@@ -457,52 +476,41 @@ func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error
 			level.Error(i.logger).Log("{{- $packageName}}:repository:insert", err.Error())
 			return err
 		}
-		normalizedData := make(map[string]interface{})
-		data := make(map[string]interface{})
-		if tmp, ok := model.(db.Model) ; ok {
-			data = tmp.ToMap(nil,true)
-			normalizedData = data
-		} else if tmp,ok := model.(map[string]interface{}); ok {
-			data = tmp
-			for key, value := range data {
-				normalizedData[helper.ResolveColumnName(key)] = value
-			}
+		var normalizedData map[string]interface{} 
+		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+			normalizedData = tmp
 		} else {
-			return 0, errors.New("invalid_object")
+			return errors.New("invalid_object")
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Insert(normalizedData)
 		query, _ := q.Build()
-		statement, err := queryable.Prepare(query)
+		statement, err := queryable.Preparex(query)
 		if err != nil {
 			level.Error(i.logger).Log("{{- $packageName}}:repository:prepareInsert", err.Error())
 			return err
 		}
 		i.stmts["insert"] = map[string]interface{}{
-			"statement": statement
-			"key": i.shortener.Encode(query),
+			"statement": statement,
+			"key": query,
 		}
 	}
+	return nil
 }
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
-func (i *repository) Update(ctx context.Context, model interface{}, params helper.QueryParams) error {
-	normalizedData := make(map[string]interface{})
-	if tmp, ok := model.(db.Model) ; ok {
-		data := tmp.ToMap(nil)
-		normalizedData = data
-	} else if tmp,ok := model.(map[string]interface{}); ok {
-		data := tmp
-		for key, value := range data {
-			normalizedData[helper.ResolveColumnName(key)] = value
-		}
+func (i *repository) Update(ctx context.Context, model interface{}, param builder.QueryParams) error {
+	var normalizedData map[string]interface{} 
+	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		normalizedData = tmp
 	} else {
 		return errors.New("invalid_object")
 	}
+	normalize(&param)
 	if i.stmts["update"] != nil {
-		if cfg, ok := i.stmts["update"].(map[string]interface{}); ok {
+		if cfg := i.stmts["update"]; len(cfg) > 0{
 			stmt,ok := cfg["statement"].(*sqlx.Stmt)
 			if !ok {
 				return errors.New("prepared statement is not set properly")
@@ -511,14 +519,19 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 			for _,data := range normalizedData {
 				tobeUpdated = append(tobeUpdated,data)
 			}
-			tobeUpdated = append(tobeUpdated, extractFromStatement(params)...)
-			rows, err := stmt.ExecContext(ctx,tobeUpdated....)
+			tobeUpdated = append(tobeUpdated, extract(param)...)
+			result, err := stmt.ExecContext(ctx,tobeUpdated...)
 			if err != nil {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:update", err.Error())
-				level.Debug(i.logger).Log("{{- $packageName}}:repository:update", i.shortener.Decode(i.key))
+				level.Debug(i.logger).Log("{{- $packageName}}:repository:update", cfg["key"])
 				return err
 			}
-			return rows.LastInsertId(), nil
+			if rowAffected, err := result.RowsAffected();  rowAffected < 1 {
+				return errors.New("no_changes")
+			} else if err != nil  {
+				return err
+			}
+			return nil
 		} else {
 			return errors.New("prepared statement is not set properly")
 		}
@@ -530,10 +543,10 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 			return err
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Update(normalizedData)
-		q = buildStatement(q, params)
+		q = where(q, param)
 		query, values := q.Build()
 		result, err := queryable.ExecContext(ctx, query, values...)
 		if err != nil {
@@ -548,7 +561,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, params helpe
 	}
 }
 
-func (i *repository) PrepareUpdate(ctx context.Context, model inteface{}, params helper.QueryParams) error {
+func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param builder.QueryParams) error {
 	if i.stmts["update"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -556,63 +569,57 @@ func (i *repository) PrepareUpdate(ctx context.Context, model inteface{}, params
 			level.Error(i.logger).Log("{{- $packageName}}:repository:prepareUpdate", err.Error())
 			return err
 		}
-		normalizedData := make(map[string]interface{})
-		if tmp, ok := model.(db.Model) ; ok {
-			data := tmp.ToMap(nil)
-			normalizedData = data
-		} else if tmp,ok := model.(map[string]interface{}); ok {
-			data := tmp
-			for key, value := range data {
-				normalizedData[helper.ResolveColumnName(key)] = value
-			}
+		var normalizedData map[string]interface{} 
+		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+			normalizedData = tmp
 		} else {
 			return errors.New("invalid_object")
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		normalize(&param)
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Update(normalizedData)
-		q = buildStatement(q, params)
+		q = where(q, param)
 		query, _ := q.Build()
-		statement, err := queryable.Prepare(query)
+		statement, err := queryable.Preparex(query)
 		if err != nil {
+			level.Error(i.logger).Log("{{- $packageName}}:repository:prepareUpdate", err.Error())
 			return err
 		}
 		i.stmts["update"] = map[string]interface{}{
 			"statement": statement,
-			"key": i.shortener.Encode(query),
+			"key": query,
 		}
 	}
+	return nil
 }
 
 //upsert : update or insert method that ignore any nil or empty value, use map to include nil value
 func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error) {
-	normalizedData := make(map[string]interface{})
-	if tmp, ok := model.(db.Model) ; ok {
-		data = tmp.ToMap(nil)
-		normalizedData = data
-	} else if tmp,ok := model.(map[string]interface{}); ok {
-		data = tmp
-		for key, value := range data {
-			normalizedData[helper.ResolveColumnName(key)] = value
-		}
+	var normalizedData map[string]interface{} 
+	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		normalizedData = tmp
 	} else {
 		return 0, errors.New("invalid_object")
 	}
+	if len(normalizedData) == 0 {
+		return 0, errors.New("invalid_object")
+	}
 	if i.stmts["upsert"] != nil {
-		if cfg, ok := i.stmts["upsert"].(map[string]interface{}); ok {
+		if cfg := i.stmts["upsert"]; len(cfg) > 0 {
 			stmt,ok := cfg["statement"].(*sqlx.Stmt)
 			if !ok {
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeUpserted := make([]interface{},0)
-			for _,data := range normalizeData {
+			for _,data := range normalizedData {
 				   tobeUpserted = append(tobeUpserted,data)
 			}
 			rows, err := stmt.ExecContext(ctx,tobeUpserted)
 			if err != nil {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:upsert", err.Error())
-				level.Debug(i.logger).Log("{{- $packageName}}:repository:upsert", i.shortener.Decode(i.key))
+				level.Debug(i.logger).Log("{{- $packageName}}:repository:upsert", cfg["key"])
 				return -1, err
 			}
 			return rows.LastInsertId()
@@ -627,9 +634,10 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 			return -1,err
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Upsert(normalizedData)
+		values := make([]interface{},0)
 		query, values := q.Build()
 		rows, err := queryable.ExecContext(ctx, query, values...)
 		if err != nil {
@@ -644,7 +652,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 	}
 }
 
-func (i *repository) PrepareUpsert(ctx context.Context, model interface{}){
+func (i *repository) PrepareUpsert(ctx context.Context, model interface{}) error {
 	if i.stmts["upsert"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -652,39 +660,38 @@ func (i *repository) PrepareUpsert(ctx context.Context, model interface{}){
 			level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
 			return err
 		}
-		normalizedData := make(map[string]interface{})
-		if tmp, ok := model.(db.Model) ; ok {
-			data := tmp.ToMap(nil)
-			normalizedData = data
-		} else if tmp,ok := model.(map[string]interface{}); ok {
-			data := tmp
-			for key, value := range data {
-				normalizedData[helper.ResolveColumnName(key)] = value
-			}
+		var normalizedData map[string]interface{} 
+		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+			normalizedData = tmp
 		} else {
 			return errors.New("invalid_object")
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Upsert(normalizedData)
 		query, _ := q.Build()
+		stmt, err := queryable.Preparex(query)
+		if err != nil {
+			return err
+		}
 		i.stmts["upsert"] = map[string]interface{}{
-			"statement": queryable.Prepare(query),
-			"key": i.shortener.Encode(query),
+			"statement": stmt, 
+			"key": query,
 		}
 	}
+	return nil
 }
 
 //delete : delete method
-func (i *repository) Delete(ctx context.Context, params helper.QueryParams) error {
+func (i *repository) Delete(ctx context.Context, param builder.QueryParams) error {
 	if i.stmts["delete"] != nil {
-		if cfg, ok := i.stmts["delete"].(map[string]interface{}); ok {
+		if cfg := i.stmts["delete"]; len(cfg) > 0{
 			stmt,ok := cfg["statement"].(*sqlx.Stmt)
 			if !ok {
 				return errors.New("prepared statement is not set properly")
 			}
-			_, err := stmt.ExecContext(ctx, query, extractFromStatement(params)...)
+			_, err := stmt.ExecContext(ctx, extract(param)...)
 			return err
 		} else {
 			return errors.New("prepared statement is not set properly")
@@ -697,21 +704,25 @@ func (i *repository) Delete(ctx context.Context, params helper.QueryParams) erro
 			return err
 		}
 		queryable := ref.(*sql.Queryable)
-		normalize(&params)
-		q := helper.New()
+		normalize(&param)
+		q := builder.New()
 		q = q.Delete()
 		q = q.From("`{{- $packageName}}`")
-		q = buildStatement(q, params)
+		q = where(q, param)
+		values := make([]interface{},0)
 		query, values := q.Build()
 		if query == "" {
 			return errors.New("Delete operation requires condition")
 		}
 		_, err := queryable.ExecContext(ctx, query, values...)
+		if err != nil {
+			level.Error(i.logger).Log("{{- $packageName}}:repository:delete", err.Error())
+		}
 		return err
 	}
 }
 
-func (i *repository) PrepareDelete(ctx context.Context, params helper.QueryParams) {
+func (i *repository) PrepareDelete(ctx context.Context, param builder.QueryParams) error {
 	if i.stmts["delete"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -720,14 +731,20 @@ func (i *repository) PrepareDelete(ctx context.Context, params helper.QueryParam
 			return err
 		}
 		queryable := ref.(*sql.Queryable)
-		q := helper.New()
+		normalize(&param)
+		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Delete()
-		q = buildStatement(q, params)
+		q = where(q, param)
 		query, _ := q.Build()
+		stmt,err := queryable.Preparex(query)
+		if err != nil {
+			return err
+		}
 		i.stmts["delete"] = map[string]interface{}{
-			"statement": queryable.Prepare(query),
-			"key": i.shortener.Encode(query),
+			"statement": stmt,
+			"key": query,
 		}
 	}
+	return nil
 }
