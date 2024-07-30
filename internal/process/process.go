@@ -48,6 +48,11 @@ func (r *runner) Initialize(path string) error {
 		return err
 	}
 	fmt.Println("gnorm.org is installed")
+	err = run("go", "get", "github.com/louvri/gosl")
+	if err != nil {
+		return err
+	}
+	fmt.Println("gosl is installed")
 
 	//build template
 	workdirPath, ok := r.config["$WORKDIR_PATH"].(string)
