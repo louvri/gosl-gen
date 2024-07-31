@@ -117,9 +117,8 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 					if err != nil {
 						level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 						return nil,err
-					}else if len(trans) == 0 {
-					   response = append(response,*result)	
 					}
+					response = append(response,*result)
 				}
 				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(response) {
 					break
@@ -146,13 +145,13 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for _, param := range params {
+			normalize(&param)
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
 				operation = param.Merge.Operation 
 			}
-			normalize(&param)
 			indexedfilter := arr.Index(param.ColumnFilter)
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
@@ -180,12 +179,11 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 				if err != nil {
 					level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 					return nil,err
-				} else if len(trans) == 0 {
-					response = append(response,*result)
-				}
+				} 					
 				if shouldMerge && builder.Identifier == operation {
 					tracks  = append(tracks, result.Get(key))
 				}
+				response = append(response,*result)
 			}
 			if shouldMerge {
 				if operation == builder.Statement {
@@ -219,13 +217,13 @@ func (i *repository) PrepareQuery(ctx context.Context, params []builder.QueryPar
 		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for idx, param := range params {
+			normalize(&param)
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
 				operation = param.Merge.Operation 
 			}
-			normalize(&param)
 			indexedfilter := arr.Index(param.ColumnFilter)
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
@@ -322,13 +320,13 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for _, param := range params {
+			normalize(&param)
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
 				operation = param.Merge.Operation 
 			}
-			normalize(&param)
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
 			q = q.Select("COUNT({{- $db_primary_key}}) as total")
@@ -376,13 +374,13 @@ func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryPar
 		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for idx, param := range params {
+			normalize(&param)
 			if param.Merge != nil {
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
 				operation = param.Merge.Operation 
 			}
-			normalize(&param)
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
 			q = q.Select("COUNT({{- $db_primary_key}}) as total")
