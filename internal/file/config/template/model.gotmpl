@@ -11,6 +11,7 @@ package {{ $packageName}}
     {{- end }}
 {{- end }}
 import (
+    "sort"
     {{- if eq $onlyString false }}
 	"fmt"
     {{- end}}

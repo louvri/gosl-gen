@@ -434,7 +434,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeInserted := make([]interface{},0)
-			for _,column := db.Columns() {
+			for _,column := range db.Columns() {
 				tobeInserted = append(tobeInserted,normalizedData[column])
 			}
 			rows, err := stmt.ExecContext(ctx,tobeInserted...)
@@ -515,7 +515,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, param builde
 				return errors.New("prepared statement is not set properly")
 			}
 			tobeUpdated := make([]interface{},0)
-			for _,column := db.Columns() {
+			for _,column := range db.Columns() {
 				tobeUpdated = append(tobeUpdated,normalizedData[column])
 			}
 			tobeUpdated = append(tobeUpdated, extract(param)...)
@@ -612,7 +612,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeUpserted := make([]interface{},0)
-			for _,column := db.Columns() {
+			for _,column := range db.Columns() {
 				tobeUpdated = append(tobeUpserted,normalizedData[column])
 			}
 			rows, err := stmt.ExecContext(ctx,tobeUpserted...)
