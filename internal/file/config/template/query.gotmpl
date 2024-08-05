@@ -189,7 +189,7 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 				if operation == builder.Statement {
 					tracks = append(tracks, stmt)
 				}
-				if param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(response) {
+				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(response) {
 					break
 				}
 			}
@@ -345,7 +345,7 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 				if operation == builder.Statement {
 					tracks = append(tracks, stmt)
 				}
-				if param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(count) {
+				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(count) {
 					break
 				}
 			}
