@@ -434,10 +434,10 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeInserted := make([]interface{},0)
-			for _,data := range normalizedData {
-				tobeInserted = append(tobeInserted,data)
+			for _,column := db.Columns() {
+				tobeInserted = append(tobeInserted,normalizedData[column])
 			}
-			rows, err := stmt.ExecContext(ctx,tobeInserted)
+			rows, err := stmt.ExecContext(ctx,tobeInserted...)
 			if err != nil {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:insert", err.Error())
 				level.Debug(i.logger).Log("{{- $packageName}}:repository:insert",cfg["key"])
@@ -484,7 +484,7 @@ func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error
 		queryable := ref.(*sql.Queryable)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Insert(normalizedData)
+		q = q.Insert(normalizedData,db.Columns())
 		query, _ := q.Build()
 		statement, err := queryable.Preparex(query)
 		if err != nil {
@@ -515,8 +515,8 @@ func (i *repository) Update(ctx context.Context, model interface{}, param builde
 				return errors.New("prepared statement is not set properly")
 			}
 			tobeUpdated := make([]interface{},0)
-			for _,data := range normalizedData {
-				tobeUpdated = append(tobeUpdated,data)
+			for _,column := db.Columns() {
+				tobeUpdated = append(tobeUpdated,normalizedData[column])
 			}
 			tobeUpdated = append(tobeUpdated, extract(param)...)
 			result, err := stmt.ExecContext(ctx,tobeUpdated...)
@@ -578,7 +578,7 @@ func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param
 		normalize(&param)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Update(normalizedData)
+		q = q.Update(normalizedData,db.Columns())
 		q = where(q, param)
 		query, _ := q.Build()
 		statement, err := queryable.Preparex(query)
@@ -612,10 +612,10 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeUpserted := make([]interface{},0)
-			for _,data := range normalizedData {
-				   tobeUpserted = append(tobeUpserted,data)
+			for _,column := db.Columns() {
+				tobeUpdated = append(tobeUpserted,normalizedData[column])
 			}
-			rows, err := stmt.ExecContext(ctx,tobeUpserted)
+			rows, err := stmt.ExecContext(ctx,tobeUpserted...)
 			if err != nil {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:upsert", err.Error())
 				level.Debug(i.logger).Log("{{- $packageName}}:repository:upsert", cfg["key"])
@@ -667,7 +667,7 @@ func (i *repository) PrepareUpsert(ctx context.Context, model interface{}) error
 		queryable := ref.(*sql.Queryable)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Upsert(normalizedData)
+		q = q.Upsert(normalizedData,db.Columns())
 		query, _ := q.Build()
 		stmt, err := queryable.Preparex(query)
 		if err != nil {

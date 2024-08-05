@@ -168,6 +168,7 @@ func Columns(filter ...string) []string{
             columns = append(columns,index[item])
         }
      }
+     sort.Strings(columns)
      return columns
 }
 
