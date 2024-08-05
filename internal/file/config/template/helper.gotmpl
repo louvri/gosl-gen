@@ -370,7 +370,7 @@ func normalize(data interface{}) interface{} {
         param.Groupby = builder.ResolveColumnNameCollections(param.Groupby)
         if param.Merge != nil {
             if !strings.Contains(param.Merge.Track,"`") {
-                param.Merge.Track = builder.ResolveColumnName(param.Merge.Track)
+                param.Merge.Track = strings.ReplaceAll(builder.ResolveColumnName(param.Merge.Track),"`","")
             }
         }
         conditions := make([]builder.Condition, 0)
