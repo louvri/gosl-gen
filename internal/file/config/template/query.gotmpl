@@ -616,9 +616,11 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 				return -1, errors.New("prepared statement is not set properly")
 			}
 			tobeUpserted := make([]interface{},0)
-			for _,column := range db.Columns() {
-				if normalizedData[column] != nil {
-					tobeUpserted = append(tobeUpserted,normalizedData[column])
+			for i:=0 ; i < 2 ; i++ {
+				for _,column := range db.Columns() {
+					if normalizedData[column] != nil {
+						tobeUpserted = append(tobeUpserted,normalizedData[column])
+					}
 				}
 			}
 			rows, err := stmt.ExecContext(ctx,tobeUpserted...)
