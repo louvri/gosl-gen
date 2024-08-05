@@ -176,7 +176,7 @@ func (m *Model) SetDefaults(defaults map[string]interface{}){
 }
 
 func (m *Model) Get(field string) interface{}{
-    field = strings.Replace(field,"`","")
+    field = strings.ReplaceAll(field,"`","")
     switch field {
          {{- range .Table.Columns }}
                 {{- $field := ""}}
