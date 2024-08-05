@@ -435,7 +435,9 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 			}
 			tobeInserted := make([]interface{},0)
 			for _,column := range db.Columns() {
-				tobeInserted = append(tobeInserted,normalizedData[column])
+				if normalizedData[column] != nil {
+				   tobeInserted = append(tobeInserted,normalizedData[column])
+				}
 			}
 			rows, err := stmt.ExecContext(ctx,tobeInserted...)
 			if err != nil {
@@ -516,7 +518,9 @@ func (i *repository) Update(ctx context.Context, model interface{}, param builde
 			}
 			tobeUpdated := make([]interface{},0)
 			for _,column := range db.Columns() {
-				tobeUpdated = append(tobeUpdated,normalizedData[column])
+				if normalizedData[column] != nil {
+				   tobeUpdated = append(tobeUpdated,normalizedData[column])
+				}
 			}
 			tobeUpdated = append(tobeUpdated, extract(param)...)
 			result, err := stmt.ExecContext(ctx,tobeUpdated...)
@@ -613,7 +617,9 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 			}
 			tobeUpserted := make([]interface{},0)
 			for _,column := range db.Columns() {
-				tobeUpserted = append(tobeUpserted,normalizedData[column])
+				if normalizedData[column] != nil {
+					tobeUpserted = append(tobeUpserted,normalizedData[column])
+				}
 			}
 			rows, err := stmt.ExecContext(ctx,tobeUpserted...)
 			if err != nil {
