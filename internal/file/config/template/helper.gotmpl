@@ -370,7 +370,7 @@ func normalize(data interface{}) interface{} {
         param.Groupby = builder.ResolveColumnNameCollections(param.Groupby)
         if param.Merge != nil {
             if !strings.Contains(param.Merge.Track,"`") {
-                param.Merge.Track = strings.ReplaceAll(builder.ResolveColumnName(param.Merge.Track),"`","")
+                param.Merge.Track = builder.ResolveColumnNameWithoutBacktick(param.Merge.Track)
             }
         }
         conditions := make([]builder.Condition, 0)
@@ -403,7 +403,9 @@ func normalize(data interface{}) interface{} {
         }
         if obj,ok := param.Object.(db.Model); ok {
             datamap := make(map[string]interface{})
-            for key, value := range obj.ToMap(nil) { datamap[builder.ResolveColumnName(key)] = value }
+            for key, value := range obj.ToMap(nil) { 
+                datamap[builder.ResolveColumnName(key)] = value 
+            }
             param.Object = datamap
         } else if obj,ok := param.Object.(map[string]interface{}); ok {
             datamap := make(map[string]interface{})
@@ -423,13 +425,13 @@ func normalize(data interface{}) interface{} {
             if strings.Contains(key,"`") {
                 datamap[key] = value 
             } else {
-                datamap[builder.ResolveColumnName(key)] = value 
+                datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value 
             }
         }
         return datamap
     } else if param, ok := data.(db.Model); ok {
         datamap := make(map[string]interface{})
-        for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnName(key)] = value }
+        for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value }
         return datamap
     }
     return nil
