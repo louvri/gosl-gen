@@ -180,7 +180,10 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 					return nil,err
 				} 					
 				if shouldMerge && builder.Identifier == operation {
-					tracks  = append(tracks, result.Get(key))
+					track := result.Get(key)
+					if track != nil {
+						tracks  = append(tracks, track)
+					}
 				}
 				response = append(response,*result)
 			}
