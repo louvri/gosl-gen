@@ -484,7 +484,7 @@ func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error
 		queryable := ref.(*sql.Queryable)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Insert(normalizedData,db.Columns())
+		q = q.Insert(normalizedData,db.Columns()...)
 		query, _ := q.Build()
 		statement, err := queryable.Preparex(query)
 		if err != nil {
@@ -578,7 +578,7 @@ func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param
 		normalize(&param)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Update(normalizedData,db.Columns())
+		q = q.Update(normalizedData,db.Columns()...)
 		q = where(q, param)
 		query, _ := q.Build()
 		statement, err := queryable.Preparex(query)
@@ -613,7 +613,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 			}
 			tobeUpserted := make([]interface{},0)
 			for _,column := range db.Columns() {
-				tobeUpdated = append(tobeUpserted,normalizedData[column])
+				tobeUpserted = append(tobeUpserted,normalizedData[column])
 			}
 			rows, err := stmt.ExecContext(ctx,tobeUpserted...)
 			if err != nil {
@@ -667,7 +667,7 @@ func (i *repository) PrepareUpsert(ctx context.Context, model interface{}) error
 		queryable := ref.(*sql.Queryable)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
-		q = q.Upsert(normalizedData,db.Columns())
+		q = q.Upsert(normalizedData,db.Columns()...)
 		query, _ := q.Build()
 		stmt, err := queryable.Preparex(query)
 		if err != nil {
