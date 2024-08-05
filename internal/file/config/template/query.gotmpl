@@ -166,9 +166,7 @@ func (i *repository) Query(ctx context.Context, params []builder.QueryParams, tr
 			}
 			q = next(q,param,key,tracks)
 			q = where(q,param)
-			var stmt string
-			values := make([]interface{},0)
-			stmt, values = q.Build()
+			stmt, values := q.Build()
 			rows, err := queryable.QueryxContext(ctx, stmt, values...)
 			if err != nil && err != _sql.ErrNoRows {
 				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
@@ -333,7 +331,6 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 			q = q.Select("COUNT({{- $db_primary_key}}) as total")
 			q = next(q,param,key,tracks)
 			q = where(q,param)
-			
 			stmt, values := q.Build()
 			row :=  queryable.DB().QueryRowContext(ctx, stmt, values...)
 			var count int
@@ -636,9 +633,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Upsert(normalizedData)
-		var query string
-		values := make([]interface{},0)
-		query, values = q.Build()
+		query, values := q.Build()
 		rows, err := queryable.ExecContext(ctx, query, values...)
 		if err != nil {
 			return -1, err
@@ -709,9 +704,7 @@ func (i *repository) Delete(ctx context.Context, param builder.QueryParams) erro
 		q = q.Delete()
 		q = q.From("`{{- $packageName}}`")
 		q = where(q, param)
-		var query string
-		values := make([]interface{},0)
-		query, values = q.Build()
+		query, values := q.Build()
 		if query == "" {
 			return errors.New("Delete operation requires condition")
 		}
