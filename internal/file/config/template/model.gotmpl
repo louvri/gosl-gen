@@ -162,7 +162,7 @@ func Columns(filter ...string) []string{
                 {{- range $index, $element := $tokens}}
                     {{- $field = (print $field (title $element))}}
             {{- end}}
-            index["{{- $field}}"] = ".Name"
+            index["{{- $field}}"] = "{{- .Name}}"
      {{- end}}
      for _,item := range filter {
         if index[item] != "" {
