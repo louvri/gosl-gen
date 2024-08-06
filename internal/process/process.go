@@ -59,6 +59,16 @@ func (r *runner) Initialize(path string) error {
 	if !ok {
 		fmt.Printf("Error: invalid workdir path\n")
 		return errors.New("invalid workdir path")
+	} else if workdirPath == "$PWD" {
+		command := `echo $PWD`
+		cmd := exec.Command("bash", "-c", command)
+		stdout, err := cmd.Output()
+		if err != nil {
+			fmt.Printf("%s Error: %s\n", err.Error(), cmd.String())
+			return err
+		}
+		workdirPath = strings.ReplaceAll(string(stdout), "\n", "")
+		fmt.Printf("change workdirectory to %s\n", workdirPath)
 	}
 	repoPath, ok := r.config["$REPOSITORY_PATH"].(string)
 	if !ok {
@@ -159,7 +169,19 @@ func (r *runner) Generate(path string) error {
 		fmt.Printf("- generating %s/%s \n", buildPath, template)
 	}
 	if r.config["$WORKDIR_PATH"] != nil {
-		command := fmt.Sprintf(`cd %s && go mod tidy`, r.config["$WORKDIR_PATH"].(string))
+		workdirPath := r.config["$WORKDIR_PATH"].(string)
+		if workdirPath == "$PWD" {
+			command := `echo $PWD`
+			cmd := exec.Command("bash", "-c", command)
+			stdout, err := cmd.Output()
+			if err != nil {
+				fmt.Printf("%s Error: %s\n", err.Error(), cmd.String())
+				return err
+			}
+			workdirPath = strings.ReplaceAll(string(stdout), "\n", "")
+			fmt.Printf("change workdirectory to %s\n", workdirPath)
+		}
+		command := fmt.Sprintf(`cd %s && go mod tidy`, workdirPath)
 		if err := run("bash", "-c", command); err != nil {
 			return err
 		}
