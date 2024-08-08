@@ -65,6 +65,9 @@ func list(param builder.QueryParams) []string {
        priorities = make([]string,0)
     } else {
        priorities = param.Priority
+       for _,priority := range priorities {
+            duplicate[priority] = true
+       }
     }
     if len(priorities) == 0 {
         {{- range .Table.PrimaryKeys }}    
@@ -95,6 +98,7 @@ func list(param builder.QueryParams) []string {
     
     keys := make([]string,0)
     extractKeys := func(key string){
+        key = strings.ReplaceAll(key,"`","")
         if !duplicate[key] {
             keys = append(keys,key)
             duplicate[key] = true
@@ -121,6 +125,7 @@ func list(param builder.QueryParams) []string {
 func where(statement builder.Builder, param builder.QueryParams) builder.Builder {
     indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -289,6 +294,7 @@ func extract(param builder.QueryParams) []interface{}{
     out := make([]interface{},0)
 	indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -417,6 +423,9 @@ func normalize(data interface{}) interface{} {
                 }
             }
             param.Object = datamap
+        }
+        for i := 0 ; i < len(param.Priority) ; i++ {
+            param.Priority[i] = builder.ResolveColumnNameWithoutBacktick(param.Priority[i])
         }
         return param
     } else if param, ok := data.(map[string]interface{}); ok {
