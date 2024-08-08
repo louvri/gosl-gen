@@ -65,6 +65,9 @@ func list(param builder.QueryParams) []string {
        priorities = make([]string,0)
     } else {
        priorities = param.Priority
+       for _,priority := range priorities {
+            duplicate[priority] = true
+       }
     }
     if len(priorities) == 0 {
         {{- range .Table.PrimaryKeys }}    
@@ -417,6 +420,9 @@ func normalize(data interface{}) interface{} {
                 }
             }
             param.Object = datamap
+        }
+        for i := 0 ; i < len(param.Priority) ; i++ {
+            param.Priority[i] = builder.ResolveColumnNameWithoutBacktick(param.Priority[i])
         }
         return param
     } else if param, ok := data.(map[string]interface{}); ok {
