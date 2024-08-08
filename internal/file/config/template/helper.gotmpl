@@ -98,6 +98,7 @@ func list(param builder.QueryParams) []string {
     
     keys := make([]string,0)
     extractKeys := func(key string){
+        key = strings.ReplaceAll(key,"`","")
         if !duplicate[key] {
             keys = append(keys,key)
             duplicate[key] = true
