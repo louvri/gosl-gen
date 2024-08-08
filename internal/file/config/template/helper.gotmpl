@@ -125,6 +125,7 @@ func list(param builder.QueryParams) []string {
 func where(statement builder.Builder, param builder.QueryParams) builder.Builder {
     indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -293,6 +294,7 @@ func extract(param builder.QueryParams) []interface{}{
     out := make([]interface{},0)
 	indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
