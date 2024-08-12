@@ -319,7 +319,6 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 		{{- end}}
 		tracks := make([]interface{}, 0)
 		key := "{{- $primary_key }}"
-		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for _, param := range params {
 			normalize(&param)
@@ -327,7 +326,7 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
-				operation = param.Merge.Operation 
+				param.Merge.Operation = builder.Statement
 			}
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
@@ -343,9 +342,7 @@ func (i *repository) Count(ctx context.Context, params []builder.QueryParams) (t
 			}
 			total = total + count
 			if shouldMerge{
-				if operation == builder.Statement {
-					tracks = append(tracks, stmt)
-				}
+				tracks = append(tracks, q)
 				if param.Merge != nil && param.Merge.ShouldContinue != nil && !param.Merge.ShouldContinue(count) {
 					break
 				}
@@ -372,7 +369,6 @@ func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryPar
 		{{- end}}
 		tracks := make([]interface{}, 0)
 		key := "{{- $primary_key }}"
-		operation := builder.Statement
 		shouldMerge := len(params) > 1
 		for idx, param := range params {
 			normalize(&param)
@@ -380,7 +376,7 @@ func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryPar
 				if param.Merge.Track != "" {
 					key = param.Merge.Track
 				}
-				operation = param.Merge.Operation 
+				param.Merge.Operation = builder.Statement
 			}
 			q := builder.New()
 			q = q.From("{{- $packageName}}")
@@ -397,8 +393,8 @@ func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryPar
 				"statement": statement,
 				"key": query,
 			}
-			if shouldMerge && operation == builder.Statement {
-				tracks = append(tracks, query)
+			if shouldMerge {
+				tracks = append(tracks, q)
 			}
 		}
 	} else if i.stmts["count"] == nil{
