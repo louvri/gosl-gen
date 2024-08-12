@@ -87,7 +87,7 @@ func list(param builder.QueryParams) []string {
                     {{- end }}
                 {{- end}}
                 {{- if eq $exists false }}
-                    if !duplicate["{{$indexName}}"] {
+                    if !duplicate["`{{$indexName}}`"] {
                         priorities = append (priorities, "`{{$indexName}}`")
                         duplicate["`{{$indexName}}`"] = true
                     }
@@ -99,6 +99,7 @@ func list(param builder.QueryParams) []string {
     keys := make([]string,0)
     extractKeys := func(key string){
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
         if !duplicate[key] {
             keys = append(keys,key)
             duplicate[key] = true
@@ -126,6 +127,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
     indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -295,6 +297,7 @@ func extract(param builder.QueryParams) []interface{}{
 	indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
