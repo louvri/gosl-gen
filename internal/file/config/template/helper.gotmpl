@@ -65,6 +65,9 @@ func list(param builder.QueryParams) []string {
        priorities = make([]string,0)
     } else {
        priorities = param.Priority
+       for _,priority := range priorities {
+            duplicate[priority] = true
+       }
     }
     if len(priorities) == 0 {
         {{- range .Table.PrimaryKeys }}    
@@ -95,6 +98,7 @@ func list(param builder.QueryParams) []string {
     
     keys := make([]string,0)
     extractKeys := func(key string){
+        key = strings.ReplaceAll(key,"`","")
         if !duplicate[key] {
             keys = append(keys,key)
             duplicate[key] = true
@@ -121,6 +125,7 @@ func list(param builder.QueryParams) []string {
 func where(statement builder.Builder, param builder.QueryParams) builder.Builder {
     indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -257,18 +262,18 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
                                 inner.Reset("select")
                                 inner.Select(key)
                                 inner.Reset("from")
-                                inner.From("area", fmt.Sprintf("%c", 'a'+i))
+                                inner.From("{{- $packageName}}", fmt.Sprintf("%c", 'a'+i))
                                 statement = statement.Not(builder.New().
                                     Exists(
                                         inner,
                                         builder.Condition{
-                                            Key: fmt.Sprintf("%s.%s",
-                                                inner.Alias("area"),
+                                            Key: fmt.Sprintf("%s.`%s`",
+                                                "{{- $packageName}}",
                                                 key,
                                             ),
                                             Operator: "=",
-                                            Value: fmt.Sprintf("%s.%s",
-                                                inner.Alias("area"),
+                                            Value: fmt.Sprintf("%s.`%s`",
+                                                inner.Alias("{{- $packageName}}"),
                                                 key,
                                             ),
                                         },
@@ -289,6 +294,7 @@ func extract(param builder.QueryParams) []interface{}{
     out := make([]interface{},0)
 	indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
+        key = strings.ReplaceAll(key,"`","")
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -370,7 +376,7 @@ func normalize(data interface{}) interface{} {
         param.Groupby = builder.ResolveColumnNameCollections(param.Groupby)
         if param.Merge != nil {
             if !strings.Contains(param.Merge.Track,"`") {
-                param.Merge.Track = builder.ResolveColumnName(param.Merge.Track)
+                param.Merge.Track = builder.ResolveColumnNameWithoutBacktick(param.Merge.Track)
             }
         }
         conditions := make([]builder.Condition, 0)
@@ -403,7 +409,9 @@ func normalize(data interface{}) interface{} {
         }
         if obj,ok := param.Object.(db.Model); ok {
             datamap := make(map[string]interface{})
-            for key, value := range obj.ToMap(nil) { datamap[builder.ResolveColumnName(key)] = value }
+            for key, value := range obj.ToMap(nil) { 
+                datamap[builder.ResolveColumnName(key)] = value 
+            }
             param.Object = datamap
         } else if obj,ok := param.Object.(map[string]interface{}); ok {
             datamap := make(map[string]interface{})
@@ -416,6 +424,9 @@ func normalize(data interface{}) interface{} {
             }
             param.Object = datamap
         }
+        for i := 0 ; i < len(param.Priority) ; i++ {
+            param.Priority[i] = builder.ResolveColumnNameWithoutBacktick(param.Priority[i])
+        }
         return param
     } else if param, ok := data.(map[string]interface{}); ok {
         datamap := make(map[string]interface{})
@@ -423,13 +434,13 @@ func normalize(data interface{}) interface{} {
             if strings.Contains(key,"`") {
                 datamap[key] = value 
             } else {
-                datamap[builder.ResolveColumnName(key)] = value 
+                datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value 
             }
         }
         return datamap
     } else if param, ok := data.(db.Model); ok {
         datamap := make(map[string]interface{})
-        for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnName(key)] = value }
+        for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value }
         return datamap
     }
     return nil

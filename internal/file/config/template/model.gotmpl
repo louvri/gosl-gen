@@ -11,6 +11,7 @@ package {{ $packageName}}
     {{- end }}
 {{- end }}
 import (
+    "sort"
     {{- if eq $onlyString false }}
 	"fmt"
     {{- end}}
@@ -154,20 +155,10 @@ func TypeFor(field string) string{
 
 func Columns(filter ...string) []string{ 
      columns := make([]string,0)
-     index := make(map[string]string)
      {{- range .Table.Columns }}
-            {{- $field := ""}}
-                {{- $tokens := split .Name "_"}}
-                {{- range $index, $element := $tokens}}
-                    {{- $field = (print $field (title $element))}}
-            {{- end}}
-            index["{{- $field}}"] = ".Name"
+        columns = append(columns, "{{- .Name}}")
      {{- end}}
-     for _,item := range filter {
-        if index[item] != "" {
-            columns = append(columns,index[item])
-        }
-     }
+     sort.Strings(columns)
      return columns
 }
 
