@@ -65,10 +65,10 @@ func list(param builder.QueryParams) []string {
        priorities = make([]string,0)
     } else {
        priorities = param.Priority
-       for _,priority := range priorities {
-            priority = strings.ReplaceAll(priority,"`","")
-            priority = fmt.Sprintf("`%s`", priority)
-            duplicate[priority] = true
+       for i := 0; i < len(priorities); i++ {
+            priorities[i] = strings.ReplaceAll(priorities[i],"`","")
+            priorities[i] = fmt.Sprintf("`%s`", priorities[i])
+            duplicate[priorities[i]] = true
        }
     }
     if len(priorities) == 0 {
