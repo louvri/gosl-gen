@@ -262,18 +262,18 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
                                 inner.Reset("select")
                                 inner.Select(key)
                                 inner.Reset("from")
-                                inner.From("area", fmt.Sprintf("%c", 'a'+i))
+                                inner.From("{{- $packageName}}", fmt.Sprintf("%c", 'a'+i))
                                 statement = statement.Not(builder.New().
                                     Exists(
                                         inner,
                                         builder.Condition{
-                                            Key: fmt.Sprintf("%s.%s",
-                                                inner.Alias("area"),
+                                            Key: fmt.Sprintf("%s.`%s`",
+                                                "{{- $packageName}}",
                                                 key,
                                             ),
                                             Operator: "=",
-                                            Value: fmt.Sprintf("%s.%s",
-                                                inner.Alias("area"),
+                                            Value: fmt.Sprintf("%s.`%s`",
+                                                inner.Alias("{{- $packageName}}"),
                                                 key,
                                             ),
                                         },
