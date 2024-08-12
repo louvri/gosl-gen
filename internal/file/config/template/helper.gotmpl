@@ -68,9 +68,9 @@ func list(param builder.QueryParams) []string {
     }
     if len(priorities) == 0 {
         {{- range .Table.PrimaryKeys }}    
-            if !duplicate["{{.Name}}"] {
-                priorities = append (priorities, "{{.Name}}")
-                duplicate["{{.Name}}"] = true
+            if !duplicate["`{{.Name}}`"] {
+                priorities = append (priorities, "`{{.Name}}`")
+                duplicate["`{{.Name}}`"] = true
             }
         {{- end }}    
         {{- range .Table.Indexes}}
@@ -85,8 +85,8 @@ func list(param builder.QueryParams) []string {
                 {{- end}}
                 {{- if eq $exists false }}
                     if !duplicate["{{$indexName}}"] {
-                        priorities = append (priorities, "{{$indexName}}")
-                        duplicate["{{$indexName}}"] = true
+                        priorities = append (priorities, "`{{$indexName}}`")
+                        duplicate["`{{$indexName}}`"] = true
                     }
                 {{- end }}
             {{- end }}
