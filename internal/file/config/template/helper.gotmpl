@@ -66,6 +66,8 @@ func list(param builder.QueryParams) []string {
     } else {
        priorities = param.Priority
        for _,priority := range priorities {
+            priority = strings.ReplaceAll(priority,"`","")
+            priority = fmt.Sprintf("`%s`", priority)
             duplicate[priority] = true
        }
     }
