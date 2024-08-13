@@ -375,11 +375,23 @@ func extract(param builder.QueryParams) []interface{}{
     return out
 }
 
-func normalize(data interface{}, shouldEscape ...bool) interface{} {
-    var escape bool
-    if len(shouldEscape) > 0 {
-        escape = shouldEscape[0]
-    }
+func normalize(data interface{}, escapeOpts ...map[string]bool) interface{} {
+    // determine if column should escape or not
+    opt := map[string]bool{}
+	if len(escapeOpts) > 0 {
+		for _, col := range escapeOpts {
+			if len(col) > 0 {
+				for key, val := range col {
+					if strings.Contains(key, "`") {
+						opt[key] = val
+					} else {
+						opt[builder.ResolveColumnNameWithoutBacktick(key)] = val
+					}
+				}
+			}
+		}
+	}
+
     if param,ok := data.(*builder.QueryParams); ok {
         param.In = builder.ResolveColumnNameMap(param.In)
         param.Notin = builder.ResolveColumnNameMap(param.Notin)
@@ -443,27 +455,25 @@ func normalize(data interface{}, shouldEscape ...bool) interface{} {
     } else if param, ok := data.(map[string]interface{}); ok {
         datamap := make(map[string]interface{})
         for key, value := range param {
-            if escape {
-                if tmp, ok := value.(string); ok && tmp != "" {
+            tmpKey := key
+            if !strings.Contains(key,"`") {
+                tmpKey = builder.ResolveColumnNameWithoutBacktick(key)
+            }
+            if len(opt) > 0 {
+                if tmp, ok := value.(string); ok && value != "" {
                     tmp = str.ExtractAlfaNumericWithSelectedSpecialCharactersFromText(tmp)
                     value = tmp
                 }
             }
-            if strings.Contains(key,"`") {
-                datamap[key] = value 
-            } else {
-                datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value 
-            }
+            datamap[tmpKey] = value 
         }
         return datamap
     } else if param, ok := data.(db.Model); ok {
         datamap := make(map[string]interface{})
         for key, value := range param.ToMap(nil) { 
-             if escape {
-                if tmp, ok := value.(string); ok && tmp != "" {
-                    tmp = str.ExtractAlfaNumericWithSelectedSpecialCharactersFromText(tmp)
-                    value = tmp
-                }
+            if len(opt) > 0 {
+                tmp = str.ExtractAlfaNumericWithSelectedSpecialCharactersFromText(tmp)
+                value = tmp
             }
             datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value 
         }
