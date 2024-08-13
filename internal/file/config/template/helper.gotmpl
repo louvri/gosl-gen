@@ -1,6 +1,11 @@
 {{- $packageName := toLower .Table.Name }}
 package {{$packageName}} 
-
+{{- $shouldImportStr := false }}
+{{- range .Table.Columns }}
+      {{- if or (eq .Type "string") eq .Type "sql.NullString"}}     
+        {{- $shouldImportStr = true }}
+    {{- end }}
+{{- end }}
 import (
    "fmt"
    "sort"
@@ -9,6 +14,9 @@ import (
    "github.com/jmoiron/sqlx"
    "errors"
 	"time"
+    {{- if eq $shouldImportStr true}}
+        "github.com/louvri/gob/str"
+    {{- end}}
     "github.com/louvri/gosl/builder"
 	db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
 )
@@ -367,7 +375,11 @@ func extract(param builder.QueryParams) []interface{}{
     return out
 }
 
-func normalize(data interface{}) interface{} {
+func normalize(data interface{}, shouldEscape ...bool) interface{} {
+    var escape bool
+    if len(shouldEscape) > 0 {
+        escape = shouldEscape[0]
+    }
     if param,ok := data.(*builder.QueryParams); ok {
         param.In = builder.ResolveColumnNameMap(param.In)
         param.Notin = builder.ResolveColumnNameMap(param.Notin)
@@ -430,7 +442,13 @@ func normalize(data interface{}) interface{} {
         return param
     } else if param, ok := data.(map[string]interface{}); ok {
         datamap := make(map[string]interface{})
-        for key, value := range param { 
+        for key, value := range param {
+            if escape {
+                if tmp, ok := value.(string); ok && tmp != "" {
+                    tmp = str.ExtractAlfaNumericWithSelectedSpecialCharactersFromText(tmp)
+                    value = tmp
+                }
+            }
             if strings.Contains(key,"`") {
                 datamap[key] = value 
             } else {
@@ -440,7 +458,15 @@ func normalize(data interface{}) interface{} {
         return datamap
     } else if param, ok := data.(db.Model); ok {
         datamap := make(map[string]interface{})
-        for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value }
+        for key, value := range param.ToMap(nil) { 
+             if escape {
+                if tmp, ok := value.(string); ok && tmp != "" {
+                    tmp = str.ExtractAlfaNumericWithSelectedSpecialCharactersFromText(tmp)
+                    value = tmp
+                }
+            }
+            datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value 
+        }
         return datamap
     }
     return nil

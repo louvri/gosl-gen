@@ -416,9 +416,9 @@ func (i *repository) PrepareCount(ctx context.Context, params []builder.QueryPar
 }
 
 //insert: insert data with default value, use map to include nil value
-func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error) {
+func (i *repository) Insert(ctx context.Context, model interface{}, shouldEscape ...bool) (int64,error) {
 	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 		normalizedData = tmp
 	} else {
 		return 0, errors.New("invalid_object")
@@ -465,7 +465,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}) (int64,error
 	}
 }
 
-func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error {
+func (i *repository) PrepareInsert(ctx context.Context, model interface{}, shouldEscape ...bool) error {
 	if i.stmts["insert"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -474,7 +474,7 @@ func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error
 			return err
 		}
 		var normalizedData map[string]interface{} 
-		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 			normalizedData = tmp
 		} else {
 			return errors.New("invalid_object")
@@ -498,14 +498,14 @@ func (i *repository) PrepareInsert(ctx context.Context, model interface{}) error
 }
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
-func (i *repository) Update(ctx context.Context, model interface{}, param builder.QueryParams) error {
+func (i *repository) Update(ctx context.Context, model interface{}, param builder.QueryParams, shouldEscape ...bool) error {
 	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 		normalizedData = tmp
 	} else {
 		return errors.New("invalid_object")
 	}
-	normalize(&param)
+	normalize(&param, shouldEscape ...bool)
 	if i.stmts["update"] != nil {
 		if cfg := i.stmts["update"]; len(cfg) > 0{
 			stmt,ok := cfg["statement"].(*sqlx.Stmt)
@@ -560,7 +560,7 @@ func (i *repository) Update(ctx context.Context, model interface{}, param builde
 	}
 }
 
-func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param builder.QueryParams) error {
+func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param builder.QueryParams, shouldEscape ...bool) error {
 	if i.stmts["update"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -569,13 +569,13 @@ func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param
 			return err
 		}
 		var normalizedData map[string]interface{} 
-		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 			normalizedData = tmp
 		} else {
 			return errors.New("invalid_object")
 		}
 		queryable := ref.(*sql.Queryable)
-		normalize(&param)
+		normalize(&param, shouldEscape ...bool)
 		q := builder.New()
 		q = q.From("`{{- $packageName}}`")
 		q = q.Update(normalizedData,db.Columns()...)
@@ -595,9 +595,9 @@ func (i *repository) PrepareUpdate(ctx context.Context, model interface{}, param
 }
 
 //upsert : update or insert method that ignore any nil or empty value, use map to include nil value
-func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error) {
+func (i *repository) Upsert(ctx context.Context, model interface{}, shouldEscape ...bool) (int64,error) {
 	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 		normalizedData = tmp
 	} else {
 		return 0, errors.New("invalid_object")
@@ -654,7 +654,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}) (int64,error
 	}
 }
 
-func (i *repository) PrepareUpsert(ctx context.Context, model interface{}) error {
+func (i *repository) PrepareUpsert(ctx context.Context, model interface{}, shouldEscape ...bool) error {
 	if i.stmts["upsert"] == nil {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -663,7 +663,7 @@ func (i *repository) PrepareUpsert(ctx context.Context, model interface{}) error
 			return err
 		}
 		var normalizedData map[string]interface{} 
-		if tmp,ok := normalize(model).(map[string]interface{}); ok {
+		if tmp,ok := normalize(model, shouldEscape ...bool).(map[string]interface{}); ok {
 			normalizedData = tmp
 		} else {
 			return errors.New("invalid_object")
