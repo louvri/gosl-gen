@@ -65,15 +65,17 @@ func list(param builder.QueryParams) []string {
        priorities = make([]string,0)
     } else {
        priorities = param.Priority
-       for _,priority := range priorities {
-            duplicate[priority] = true
+       for i := 0; i < len(priorities); i++ {
+            priorities[i] = strings.ReplaceAll(priorities[i],"`","")
+            priorities[i] = fmt.Sprintf("`%s`", priorities[i])
+            duplicate[priorities[i]] = true
        }
     }
     if len(priorities) == 0 {
         {{- range .Table.PrimaryKeys }}    
-            if !duplicate["{{.Name}}"] {
-                priorities = append (priorities, "{{.Name}}")
-                duplicate["{{.Name}}"] = true
+            if !duplicate["`{{.Name}}`"] {
+                priorities = append (priorities, "`{{.Name}}`")
+                duplicate["`{{.Name}}`"] = true
             }
         {{- end }}    
         {{- range .Table.Indexes}}
@@ -87,9 +89,9 @@ func list(param builder.QueryParams) []string {
                     {{- end }}
                 {{- end}}
                 {{- if eq $exists false }}
-                    if !duplicate["{{$indexName}}"] {
-                        priorities = append (priorities, "{{$indexName}}")
-                        duplicate["{{$indexName}}"] = true
+                    if !duplicate["`{{$indexName}}`"] {
+                        priorities = append (priorities, "`{{$indexName}}`")
+                        duplicate["`{{$indexName}}`"] = true
                     }
                 {{- end }}
             {{- end }}
@@ -99,6 +101,7 @@ func list(param builder.QueryParams) []string {
     keys := make([]string,0)
     extractKeys := func(key string){
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
         if !duplicate[key] {
             keys = append(keys,key)
             duplicate[key] = true
@@ -126,6 +129,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
     indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
@@ -295,6 +299,7 @@ func extract(param builder.QueryParams) []interface{}{
 	indexes := make(map[string][]map[string]interface{})
 	register := func(op, key string, value interface{}) {
         key = strings.ReplaceAll(key,"`","")
+        key = fmt.Sprintf("`%s`", key)
 		if indexes[key] == nil {
 			indexes[key] = make([]map[string]interface{}, 0)
 		}
