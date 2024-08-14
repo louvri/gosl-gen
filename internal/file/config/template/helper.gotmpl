@@ -153,7 +153,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 				switch action {
 				case "betweenTime":
 					{
-						if converted, ok := value.([]time.Time); ok {
+						if converted, ok := value.([]time.Time); ok && len(converted) > 0 {
 							if len(converted) == 2 {
 								_, nWhere, _ := statement.Status()
 								if nWhere > 0 {
@@ -165,27 +165,107 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 					}
 				case "in":
 					{
-						if value != nil {
+						if tmp, ok := value.([]string); ok && len(tmp) > 0{
 							_, nWhere, _ := statement.Status()
 							if nWhere > 0 {
 								statement = statement.And()
 							}
 							statement = statement.In(map[string]interface{}{
-								key: value,
+								key: tmp,
 							})
-						}
+						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.In(map[string]interface{}{
+								key: tmp,
+							})
+                        } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.In(map[string]interface{}{
+								key: tmp,
+							})
+                        } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
+                             _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.In(map[string]interface{}{
+								key: tmp,
+							})
+                        } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.In(map[string]interface{}{
+								key: tmp,
+							})
+                        } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.In(map[string]interface{}{
+								key: tmp,
+							})
+                        }
 					}
 				case "notIn":
 					{
-						if value != nil {
+						if tmp, ok := value.([]string); ok && len(tmp) > 0{
 							_, nWhere, _ := statement.Status()
 							if nWhere > 0 {
 								statement = statement.And()
 							}
 							statement = statement.Not(builder.New().In(map[string]interface{}{
-								key: value,
+								key: tmp,
 							}))
-						}
+						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.Not(builder.New().In(map[string]interface{}{
+								key: tmp,
+							}))
+                        } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.Not(builder.New().In(map[string]interface{}{
+								key: tmp,
+							}))
+                        } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
+                             _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.Not(builder.New().In(map[string]interface{}{
+								key: tmp,
+							}))
+                        } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.Not(builder.New().In(map[string]interface{}{
+								key: tmp,
+							}))
+                        } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
+                            _, nWhere, _ := statement.Status()
+							if nWhere > 0 {
+								statement = statement.And()
+							}
+							statement = statement.Not(builder.New().In(map[string]interface{}{
+								key: tmp,
+							}))
+                        }
 					}
 				case "object":
 					{
@@ -203,7 +283,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 				case "custom":
 					{
 						cond := value.(builder.Condition)
-						if cond.Key != "" && cond.Value != nil {
+						if cond.Key != "" {
 							_, nWhere, _ := statement.Status()
 							if nWhere > 0 {
 								statement = statement.And()
@@ -322,7 +402,7 @@ func extract(param builder.QueryParams) []interface{}{
 				switch action {
 				case "betweenTime":
 					{
-						if tmp, ok := value.([]time.Time); ok {
+						if tmp, ok := value.([]time.Time); ok && len(tmp) > 0{
 							if len(tmp) == 2 {
                                 for _,converted := range tmp {
                                     out = append(out, converted)
@@ -330,25 +410,33 @@ func extract(param builder.QueryParams) []interface{}{
 							}
 						}
 					}
-				case "in":
+				case "in","notIn":
 					{
-						if value != nil {
-                            if tmp, ok := value.([]string); ok {
-                                for _,converted := range tmp {
-                                    out = append(out, converted)
-                                }
+                        if tmp, ok := value.([]string); ok && len(tmp) > 0{
+							for _,converted := range tmp {
+                                out = append(out, converted)
                             }
-						}
-					}
-				case "notIn":
-					{
-						if value != nil {
-							if tmp, ok := value.([]string); ok {
-                                for _,converted := range tmp {
-                                    out = append(out, converted)
-                                }
+						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
+                            for _,converted := range tmp {
+                                out = append(out, converted)
                             }
-						}
+                        } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
+                            for _,converted := range tmp {
+                                out = append(out, converted)
+                            }
+                        } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
+                            for _,converted := range tmp {
+                                out = append(out, converted)
+                            }
+                        } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
+                            for _,converted := range tmp {
+                                out = append(out, converted)
+                            }
+                        } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
+                            for _,converted := range tmp {
+                                out = append(out, converted)
+                            }
+                        }
 					}
 				case "object":
 					{
@@ -359,7 +447,7 @@ func extract(param builder.QueryParams) []interface{}{
 				case "custom":
 					{
 						cond := value.(builder.Condition)
-						if cond.Key != "" && cond.Value != nil {
+						if cond.Key != "" {
                             out = append(out, cond.Value)
 						}
 					}
