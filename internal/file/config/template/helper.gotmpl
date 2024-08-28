@@ -299,35 +299,35 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
     }
     return statement
 }
-func next(statement builder.Builder,param builder.QueryParams,key string, tracks []interface{}) builder.Builder{
-    if len(tracks) > 0 {
-        if param.Next != nil {
-            _, nWhere, _ := statement.Status()
-            if nWhere > 0 {
-                statement = statement.And()
-            }
-            if param.Next.Direction == "desc" {
-                statement = statement.Compare([]builder.Condition{
-                    {
-                        Key:      param.Next.Column,
-                        Operator: "<",
-                        Value:    param.Next.Value,
-                    },
-                })
-            } else {
-                statement = statement.Compare([]builder.Condition{
-                    {
-                        Key:      param.Next.Column,
-                        Operator: ">",
-                        Value:    param.Next.Value,
-                    },
-                })
-            }
-        } 
-        if param.Merge != nil {
-            switch param.Merge.Operation {
-                case builder.Identifier:
-                    {
+func next(statement builder.Builder,param builder.QueryParams,key string, tracks []interface{}) builder.Builder{ 
+    if param.Next != nil {
+        _, nWhere, _ := statement.Status()
+        if nWhere > 0 {
+            statement = statement.And()
+        }
+        if param.Next.Direction == "desc" {
+            statement = statement.Compare([]builder.Condition{
+                {
+                    Key:      param.Next.Column,
+                    Operator: "<",
+                    Value:    param.Next.Value,
+                },
+            })
+        } else {
+            statement = statement.Compare([]builder.Condition{
+                {
+                    Key:      param.Next.Column,
+                    Operator: ">",
+                    Value:    param.Next.Value,
+                },
+            })
+        }
+    } 
+    if param.Merge != nil {
+        switch param.Merge.Operation {
+            case builder.Identifier:
+                {
+                    if len(tracks) > 0 {
                         in := make(map[string]interface{})
                         in[key] = tracks
                         if _, w, _ := statement.Status(); w > 0 {
@@ -335,42 +335,45 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
                         }
                         statement = statement.Not(builder.New().In(in))
                     }
-                case builder.Statement:
-                    {
-                        for i, item := range tracks {
-                            //id not in (statement)
-                            if _, w, _ := statement.Status(); w > 0 {
-                                statement = statement.And()
-                            }
-                            if inner, ok := item.(builder.Builder); ok {
-                                inner.Reset("select")
-                                inner.Select(key)
-                                inner.Reset("from")
-                                inner.From("{{- $packageName}}", fmt.Sprintf("%c", 'a'+i))
-                                statement = statement.Not(builder.New().
-                                    Exists(
-                                        inner,
-                                        builder.Condition{
-                                            Key: fmt.Sprintf("%s.`%s`",
-                                                "{{- $packageName}}",
-                                                key,
-                                            ),
-                                            Operator: "=",
-                                            Value: fmt.Sprintf("%s.`%s`",
-                                                inner.Alias("{{- $packageName}}"),
-                                                key,
-                                            ),
-                                        },
-                                    ),
-                                )
-                            }
+                }
+            case builder.Statement:
+                {
+                    for i, item := range tracks {
+                        if item == nil {
+                            continue
+                        }
+                        if _, w, _ := statement.Status(); w > 0 {
+                            statement = statement.And()
+                        }
+                        if inner, ok := item.(builder.Builder); ok {
+                            inner.Reset("select")
+                            inner.Select(key)
+                            inner.Reset("from")
+                            inner.From("{{- $packageName}}", fmt.Sprintf("%c", 'a'+i))
+                            statement = statement.Not(builder.New().
+                                Exists(
+                                    inner,
+                                    builder.Condition{
+                                        Key: fmt.Sprintf("%s.`%s`",
+                                            "{{- $packageName}}",
+                                            key,
+                                        ),
+                                        Operator: "=",
+                                        Value: fmt.Sprintf("%s.`%s`",
+                                            inner.Alias("{{- $packageName}}"),
+                                            key,
+                                        ),
+                                    },
+                                ),
+                            )
                         }
                     }
-            }
-
+                }
         }
-        
+
     }
+        
+    
     return statement
 }
 
