@@ -1,8 +1,6 @@
 module github.com/louvri/gosl-gen
 
-go 1.21.6
-
-toolchain go1.23.0
+go 1.21.3
 
 require github.com/spf13/cobra v1.8.0
 
