@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const VERSION string = "v0.2.0"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "gosl-gen",
@@ -50,4 +52,13 @@ func init() {
 	}
 	rootCmd.PersistentFlags().StringVarP(&cfg, "config", "c", "", "config file")
 	rootCmd.AddCommand(genCmd)
+	var versionCmd = &cobra.Command{
+		Use:   "version",
+		Short: `gosl-gen version`,
+		Long:  `gosl-gen version`,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(VERSION)
+		},
+	}
+	rootCmd.AddCommand(versionCmd)
 }

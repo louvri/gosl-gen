@@ -38,7 +38,7 @@ func TestReadAndWriteConfig(t *testing.T) {
 }
 
 func TestReadAndWriteHelper(t *testing.T) {
-	toBeRead := New("template/helper.gotmpl", Read)
+	toBeRead := New("template/helper.tmpl", Read)
 	toBeWritten := New(output, Write)
 	defer func() {
 		err := toBeRead.Close()
