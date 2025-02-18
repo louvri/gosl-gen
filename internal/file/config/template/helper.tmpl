@@ -61,10 +61,10 @@ func list(param builder.QueryParams) []string {
     //build statement priorities
     duplicate := make(map[string]bool)
     var priorities []string
-    if len(param.Priority) == 0 {
+    if len(param.Priorities) == 0 {
        priorities = make([]string,0)
     } else {
-       priorities = param.Priority
+       priorities = param.Priorities
        for i := 0; i < len(priorities); i++ {
             priorities[i] = strings.ReplaceAll(priorities[i],"`","")
             priorities[i] = fmt.Sprintf("`%s`", priorities[i])
@@ -315,7 +315,7 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
             })
         } else {
             statement = statement.Compare([]builder.Condition{
-                {
+                { 
                     Key:      param.Next.Column,
                     Operator: ">",
                     Value:    param.Next.Value,
@@ -377,92 +377,6 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
     return statement
 }
 
-func extract(param builder.QueryParams) []interface{}{
-    out := make([]interface{},0)
-	indexes := make(map[string][]map[string]interface{})
-	register := func(op, key string, value interface{}) {
-        key = strings.ReplaceAll(key,"`","")
-        key = fmt.Sprintf("`%s`", key)
-		if indexes[key] == nil {
-			indexes[key] = make([]map[string]interface{}, 0)
-		}
-		indexes[key] = append(indexes[key], map[string]interface{}{
-			op: value,
-		})
-	}
-    //index
-    for key, value := range param.BetweenTime { register("betweenTime",key,value) }
-    for key, value := range param.In { register("in",key,value) }
-    for key, value := range param.Notin { register("notIn",key,value) }
-    if obj,ok := param.Object.(map[string]interface{}); ok {
-        for key, value := range obj { register("object",key,value) }
-    }
-    for _,condition := range param.Conditions { register("custom",condition.Key,condition) }
-    
-    for _,key := range list(param) {
-       for _, actions := range indexes[key] {
-			for action, value := range actions {
-				switch action {
-				case "betweenTime":
-					{
-						if tmp, ok := value.([]time.Time); ok && len(tmp) > 0{
-							if len(tmp) == 2 {
-                                for _,converted := range tmp {
-                                    out = append(out, converted)
-                                }
-							}
-						}
-					}
-				case "in","notIn":
-					{
-                        if tmp, ok := value.([]string); ok && len(tmp) > 0{
-							for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
-                            for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-                        } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
-                            for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-                        } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
-                            for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-                        } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
-                            for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-                        } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
-                            for _,converted := range tmp {
-                                out = append(out, converted)
-                            }
-                        }
-					}
-				case "object":
-					{
-						if value != nil {
-                            out = append(out, value)
-						}
-					}
-				case "custom":
-					{
-						cond := value.(builder.Condition)
-						if cond.Key != "" {
-                            out = append(out, cond.Value)
-						}
-					}
-				}
-
-			}
-
-		}
-    }
-    return out
-}
-
 func normalize(data interface{}) interface{} {
     if param,ok := data.(*builder.QueryParams); ok {
         param.In = builder.ResolveColumnNameMap(param.In)
@@ -520,8 +434,8 @@ func normalize(data interface{}) interface{} {
             }
             param.Object = datamap
         }
-        for i := 0 ; i < len(param.Priority) ; i++ {
-            param.Priority[i] = builder.ResolveColumnNameWithoutBacktick(param.Priority[i])
+        for i := 0 ; i < len(param.Priorities) ; i++ {
+            param.Priorities[i] = builder.ResolveColumnNameWithoutBacktick(param.Priorities[i])
         }
         return param
     } else if param, ok := data.(map[string]interface{}); ok {

@@ -53,6 +53,26 @@ func (r *runner) Initialize(path string) error {
 		return err
 	}
 	fmt.Println("gosl is installed")
+	err = run("go", "get", "github.com/patrickmn/go-cache")
+	if err != nil {
+		return err
+	}
+	fmt.Println("go-cache is installed")
+	err = run("go", "get", "github.com/go-kit/log")
+	if err != nil {
+		return err
+	}
+	fmt.Println("go-kit/log is installed")
+	err = run("go", "get", "github.com/jmoiron/sqlx")
+	if err != nil {
+		return err
+	}
+	fmt.Println("sqlx is installed")
+	err = run("go", "get", "github.com/louvri/gob/arr")
+	if err != nil {
+		return err
+	}
+	fmt.Println("gob is installed")
 
 	//build template
 	workdirPath, ok := r.config["$WORKDIR_PATH"].(string)
@@ -94,8 +114,8 @@ func (r *runner) Initialize(path string) error {
 		var writer config.File
 		tomlTemplate := config.New("template/config.toml", config.Read)
 		tomlBuild := config.New(fmt.Sprintf("%s/%s/config.toml", buildPath, template), config.Write)
-		reader = config.New("template/"+template+".gotmpl", config.Read)
-		writer = config.New(fmt.Sprintf("%s/%s/%s.gotmpl", buildPath, template, template), config.Write)
+		reader = config.New("template/"+template+".tmpl", config.Read)
+		writer = config.New(fmt.Sprintf("%s/%s/%s.tmpl", buildPath, template, template), config.Write)
 		defer func() {
 			writer.Close()
 			reader.Close()
@@ -120,8 +140,7 @@ func (r *runner) Initialize(path string) error {
 				data = strings.ReplaceAll(data, "$DB_EXCLUDE_TABLES", fmt.Sprintf("%v", r.config["$DB_EXCLUDE_TABLES"]))
 				data = strings.ReplaceAll(data, "$DB_TYPE", r.config["$DB_TYPE"].(string))
 				data = strings.ReplaceAll(data, "$WORKDIR_PATH", workdirPath)
-
-				data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
+				data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/%s.go\" =\"%s.tmpl\"", repoPath, template, template))
 			} else {
 				data = strings.ReplaceAll(data, "$DB_CONNECTION_STRING", r.config["$DB_CONNECTION_STRING"].(string))
 				data = strings.ReplaceAll(data, "$DB_SCHEMA", fmt.Sprintf("%v", r.config["$DB_SCHEMA"]))
@@ -135,11 +154,11 @@ func (r *runner) Initialize(path string) error {
 				switch template {
 				case "model":
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", modelPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.tmpl\"", modelPath, template, template))
 					}
 				default:
 					{
-						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.gotmpl\"", repoPath, template, template))
+						data = strings.ReplaceAll(data, "$GENERATE_PATH", fmt.Sprintf("\"%s/{{.Table}}/%s.go\" =\"%s.tmpl\"", repoPath, template, template))
 					}
 				}
 			}

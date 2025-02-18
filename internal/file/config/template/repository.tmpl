@@ -1,0 +1,18 @@
+package repository
+
+import (
+	"context"
+	"github.com/louvri/gosl/transformer"
+)
+
+type Repository interface {
+	Get(ctx context.Context, queryParams interface{},trans ...transformer.Transformer) (interface{},error)
+	All(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error)
+	Set(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
+	Query(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error)
+	Count(ctx context.Context, queryParams interface{}) (total int, err error)
+	Insert(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
+	Update(ctx context.Context, model interface{}, queryParams interface{}) error
+	Upsert(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
+	Delete(ctx context.Context, queryParams interface{}) error
+}
