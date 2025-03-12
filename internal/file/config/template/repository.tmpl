@@ -6,13 +6,13 @@ import (
 )
 
 type Repository interface {
-	Get(ctx context.Context, queryParams interface{},trans ...transformer.Transformer) (interface{},error)
-	All(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error)
-	Set(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
-	Query(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error)
-	Count(ctx context.Context, queryParams interface{}) (total int, err error)
-	Insert(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
-	Update(ctx context.Context, model interface{}, queryParams interface{}) error
-	Upsert(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error)
-	Delete(ctx context.Context, queryParams interface{}) error
+	Get(ctx context.Context, queryParams any,trans ...transformer.Transformer) (any,error)
+	All(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error)
+	Set(ctx context.Context, model any, usePreparedStatement bool) (int64,error)
+	Query(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error)
+	Count(ctx context.Context, queryParams any) (total int, err error)
+	Insert(ctx context.Context, model any, usePreparedStatement bool) (int64,error)
+	Update(ctx context.Context, model any, queryParams any) error
+	Upsert(ctx context.Context, model any, usePreparedStatement bool) (int64,error)
+	Delete(ctx context.Context, queryParams any) error
 }

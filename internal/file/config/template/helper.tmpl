@@ -112,7 +112,7 @@ func list(param builder.QueryParams) []string {
     for key := range param.BetweenTime { extractKeys(key) }
     for key := range param.In { extractKeys(key) }
     for key := range param.Notin { extractKeys(key) }
-    if obj,ok := param.Object.(map[string]interface{}); ok {
+    if obj,ok := param.Object.(map[string]any); ok {
         for key := range obj { extractKeys(key) }
     }
     for _,condition := range param.Conditions { extractKeys(condition.Key) }
@@ -126,14 +126,14 @@ func list(param builder.QueryParams) []string {
 
 
 func where(statement builder.Builder, param builder.QueryParams) builder.Builder {
-    indexes := make(map[string][]map[string]interface{})
-	register := func(op, key string, value interface{}) {
+    indexes := make(map[string][]map[string]any)
+	register := func(op, key string, value any) {
         key = strings.ReplaceAll(key,"`","")
         key = fmt.Sprintf("`%s`", key)
 		if indexes[key] == nil {
-			indexes[key] = make([]map[string]interface{}, 0)
+			indexes[key] = make([]map[string]any, 0)
 		}
-		indexes[key] = append(indexes[key], map[string]interface{}{
+		indexes[key] = append(indexes[key], map[string]any{
 			op: value,
 		})
 	}
@@ -141,7 +141,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
     for key, value := range param.BetweenTime { register("betweenTime",key,value) }
     for key, value := range param.In { register("in",key,value) }
     for key, value := range param.Notin { register("notIn",key,value) }
-    if obj,ok := param.Object.(map[string]interface{}); ok {
+    if obj,ok := param.Object.(map[string]any); ok {
         for key, value := range obj { register("object",key,value) }
     }
     for _,condition := range param.Conditions { register("custom",condition.Key,condition) }
@@ -170,7 +170,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
 						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
@@ -178,7 +178,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
                         } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
@@ -186,7 +186,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
                         } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
@@ -194,7 +194,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
                         } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
@@ -202,7 +202,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
                         } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
@@ -210,7 +210,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.In(map[string]interface{}{
+							statement = statement.In(map[string]any{
 								key: tmp,
 							})
                         }
@@ -222,7 +222,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
 						} else if tmp, ok := value.([]int64); ok && len(tmp) > 0 {
@@ -230,7 +230,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
                         } else if tmp, ok := value.([]int); ok && len(tmp) > 0 {
@@ -238,7 +238,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
                         } else if tmp, ok := value.([]float64); ok && len(tmp) > 0 {
@@ -246,7 +246,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
                         } else if tmp, ok := value.([]float32); ok && len(tmp) > 0 {
@@ -254,7 +254,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
                         } else if tmp, ok := value.([]bool); ok && len(tmp) > 0 {
@@ -262,7 +262,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							if nWhere > 0 {
 								statement = statement.And()
 							}
-							statement = statement.Not(builder.New().In(map[string]interface{}{
+							statement = statement.Not(builder.New().In(map[string]any{
 								key: tmp,
 							}))
                         }
@@ -277,7 +277,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
 							var str strings.Builder
 							str.WriteString(key)
 							str.WriteString(" = ?")
-							statement = statement.Statement(str.String(), []interface{}{value})
+							statement = statement.Statement(str.String(), []any{value})
 						}
 					}
 				case "custom":
@@ -299,7 +299,7 @@ func where(statement builder.Builder, param builder.QueryParams) builder.Builder
     }
     return statement
 }
-func next(statement builder.Builder,param builder.QueryParams,key string, tracks []interface{}) builder.Builder{ 
+func next(statement builder.Builder,param builder.QueryParams,key string, tracks []any) builder.Builder{ 
     if param.Next != nil {
         _, nWhere, _ := statement.Status()
         if nWhere > 0 {
@@ -328,7 +328,7 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
             case builder.Identifier:
                 {
                     if len(tracks) > 0 {
-                        in := make(map[string]interface{})
+                        in := make(map[string]any)
                         in[key] = tracks
                         if _, w, _ := statement.Status(); w > 0 {
                             statement = statement.And()
@@ -377,7 +377,7 @@ func next(statement builder.Builder,param builder.QueryParams,key string, tracks
     return statement
 }
 
-func normalize(data interface{}) interface{} {
+func normalize(data any) any {
     if param,ok := data.(*builder.QueryParams); ok {
         param.In = builder.ResolveColumnNameMap(param.In)
         param.Notin = builder.ResolveColumnNameMap(param.Notin)
@@ -418,13 +418,13 @@ func normalize(data interface{}) interface{} {
             }
         }
         if obj,ok := param.Object.(db.Model); ok {
-            datamap := make(map[string]interface{})
+            datamap := make(map[string]any)
             for key, value := range obj.ToMap(nil) { 
                 datamap[builder.ResolveColumnName(key)] = value 
             }
             param.Object = datamap
-        } else if obj,ok := param.Object.(map[string]interface{}); ok {
-            datamap := make(map[string]interface{})
+        } else if obj,ok := param.Object.(map[string]any); ok {
+            datamap := make(map[string]any)
             for key, value := range obj { 
                 if strings.Contains(key,"`") {
                     datamap[key] = value 
@@ -438,8 +438,8 @@ func normalize(data interface{}) interface{} {
             param.Priorities[i] = builder.ResolveColumnNameWithoutBacktick(param.Priorities[i])
         }
         return param
-    } else if param, ok := data.(map[string]interface{}); ok {
-        datamap := make(map[string]interface{})
+    } else if param, ok := data.(map[string]any); ok {
+        datamap := make(map[string]any)
         for key, value := range param { 
             if strings.Contains(key,"`") {
                 datamap[key] = value 
@@ -449,14 +449,14 @@ func normalize(data interface{}) interface{} {
         }
         return datamap
     } else if param, ok := data.(db.Model); ok {
-        datamap := make(map[string]interface{})
+        datamap := make(map[string]any)
         for key, value := range param.ToMap(nil) { datamap[builder.ResolveColumnNameWithoutBacktick(key)] = value }
         return datamap
     }
     return nil
 }
 
-func scan(rows interface{}, filter map[string]bool) (*db.Model, error) {
+func scan(rows any, filter map[string]bool) (*db.Model, error) {
     var err error
     var result db.Model
     var _row *sqlx.Row
@@ -469,7 +469,7 @@ func scan(rows interface{}, filter map[string]bool) (*db.Model, error) {
             return nil,errors.New("wrong type of sql.row")
         }
     }
-    tobeScanned := make([]interface{}, 0)
+    tobeScanned := make([]any, 0)
     isFilterEmpty := len(filter) == 0
     {{- range .Table.Columns }}
             {{- $objectProperty := ""}}
