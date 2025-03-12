@@ -34,7 +34,7 @@ func New() Runner {
 }
 
 type runner struct {
-	config map[string]interface{}
+	config map[string]any
 }
 
 func (r *runner) Initialize(path string) error {
@@ -242,7 +242,7 @@ func (r *runner) getConfig(path string) error {
 	}
 	if r.config["$DB_SCHEMA"] == nil {
 		return errors.New("$DB_SCHEMA is mandatory")
-	} else if arr, ok := r.config["$DB_SCHEMA"].([]interface{}); !ok {
+	} else if arr, ok := r.config["$DB_SCHEMA"].([]any); !ok {
 		return errors.New("$DB_SCHEMA value should be array")
 	} else {
 		var output strings.Builder
@@ -258,7 +258,7 @@ func (r *runner) getConfig(path string) error {
 		output.WriteRune(']')
 		r.config["$DB_SCHEMA"] = output.String()
 	}
-	if arr, ok := r.config["$DB_INCLUDE_TABLES"].([]interface{}); !ok {
+	if arr, ok := r.config["$DB_INCLUDE_TABLES"].([]any); !ok {
 		r.config["$DB_INCLUDE_TABLES"] = "[]"
 	} else {
 		var output strings.Builder
@@ -274,7 +274,7 @@ func (r *runner) getConfig(path string) error {
 		output.WriteRune(']')
 		r.config["$DB_INCLUDE_TABLES"] = output.String()
 	}
-	if arr, ok := r.config["$DB_EXCLUDE_TABLES"].([]interface{}); !ok {
+	if arr, ok := r.config["$DB_EXCLUDE_TABLES"].([]any); !ok {
 		r.config["$DB_EXCLUDE_TABLES"] = "[]"
 	} else {
 		var output strings.Builder

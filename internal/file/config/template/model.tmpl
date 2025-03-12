@@ -142,7 +142,7 @@ type Model struct {
     {{$field}} {{.Type}} `db:"{{- .Name}}"`
     {{- end}}
 {{- end}}
-    Defaults map[string]interface{}
+    Defaults map[string]any
 }
 func TypeFor(field string) string{
     {{- range .Table.Columns }}
@@ -162,11 +162,11 @@ func Columns(filter ...string) []string{
      return columns
 }
 
-func (m *Model) SetDefaults(defaults map[string]interface{}){
+func (m *Model) SetDefaults(defaults map[string]any){
     m.Defaults = defaults
 }
 
-func (m *Model) Get(field string) interface{}{
+func (m *Model) Get(field string) any{
     switch field {
          {{- range .Table.Columns }}
                 {{- $field := ""}}
@@ -243,9 +243,9 @@ func (m *Model) ToString(builder *strings.Builder) {
     {{- end}}
 }
 
-func (m *Model) ToMap(builder map[string]interface{},dontIgnoreEmtpy ...bool) map[string]interface{} {
+func (m *Model) ToMap(builder map[string]any,dontIgnoreEmtpy ...bool) map[string]any {
     if builder == nil {
-        builder = make(map[string]interface{})
+        builder = make(map[string]any)
     }
     var dontIgnore bool
     if len(dontIgnoreEmtpy) > 0 {
@@ -380,9 +380,9 @@ func (m *Model) ToMap(builder map[string]interface{},dontIgnoreEmtpy ...bool) ma
     return builder
 }
 
-func (m *Model) ToMapWithFilter(builder map[string]interface{},filter []string,dontIgnoreEmtpy ...bool) map[string]interface{} {
+func (m *Model) ToMapWithFilter(builder map[string]any,filter []string,dontIgnoreEmtpy ...bool) map[string]any {
     if builder == nil {
-        builder = make(map[string]interface{})
+        builder = make(map[string]any)
     }
     var dontIgnore bool
     if len(dontIgnoreEmtpy) > 0 {

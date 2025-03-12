@@ -16,8 +16,8 @@ func New(path string) File {
 	}
 }
 
-func (f *File) Object() (map[string]interface{}, error) {
-	response := make(map[string]interface{})
+func (f *File) Object() (map[string]any, error) {
+	response := make(map[string]any)
 	file, err := os.Open(f.path)
 	if err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func (f *File) Object() (map[string]interface{}, error) {
 	return response, nil
 }
 
-func (f *File) Array() ([]map[string]interface{}, error) {
-	response := make([]map[string]interface{}, 0)
+func (f *File) Array() ([]map[string]any, error) {
+	response := make([]map[string]any, 0)
 	file, err := os.Open(f.path)
 	if err != nil {
 		return nil, err

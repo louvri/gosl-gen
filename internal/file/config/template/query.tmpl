@@ -35,8 +35,8 @@ func New(logger log.Logger) base.Repository {
 	return instance
 }
 
-func (i *repository) Get(ctx context.Context, queryParams interface{},trans ...transformer.Transformer) (interface{},error) {
-	var response interface{}
+func (i *repository) Get(ctx context.Context, queryParams any,trans ...transformer.Transformer) (any,error) {
+	var response any
 	var err error
 	params := make([]builder.QueryParams,0)
 	if tmp,ok := queryParams.([]builder.QueryParams); ok {
@@ -60,7 +60,7 @@ func (i *repository) Get(ctx context.Context, queryParams interface{},trans ...t
 	}
 }
 
-func (i *repository) All(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error) {
+func (i *repository) All(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error) {
 	params := make([]builder.QueryParams,0)
 	if tmp,ok := queryParams.([]builder.QueryParams); ok {
 		params = tmp
@@ -75,11 +75,11 @@ func (i *repository) All(ctx context.Context, queryParams interface{}, trans ...
 	return i.Query(ctx,params,trans...)
 }
 
-func (i *repository) Set(ctx context.Context, model interface{}, usePreparedStatement bool) (int64,error) {
+func (i *repository) Set(ctx context.Context, model any, usePreparedStatement bool) (int64,error) {
 	return i.Upsert(ctx,model,usePreparedStatement)
 }
 
-func (i *repository) Query(ctx context.Context, queryParams interface{}, trans ...transformer.Transformer) (interface{},error) {
+func (i *repository) Query(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error) {
 	params := make([]builder.QueryParams,0)
 	if tmp,ok := queryParams.([]builder.QueryParams); ok {
 		params = tmp
@@ -94,7 +94,7 @@ func (i *repository) Query(ctx context.Context, queryParams interface{}, trans .
 			return nil, err
 		}
 		if result != nil {
-			var out interface{}
+			var out any
 			out = *result
 			if len(trans) > 0 {
 				if trans[0].Transform != nil {
@@ -126,7 +126,7 @@ func (i *repository) Query(ctx context.Context, queryParams interface{}, trans .
 	{{- range .Table.PrimaryKeys }}
 		{{- $primary_key = .Name}}
 	{{- end}}
-	tracks := make([]interface{}, 0)
+	tracks := make([]any, 0)
 	key := "{{- $primary_key }}"
 	operation := builder.Statement
 	shouldMerge := len(params) > 1
@@ -210,7 +210,7 @@ func (i *repository) Query(ctx context.Context, queryParams interface{}, trans .
 	return response,nil
 }
 
-func (i *repository) Count(ctx context.Context, queryParams interface{}) (total int, err error) {
+func (i *repository) Count(ctx context.Context, queryParams any) (total int, err error) {
 	params := make([]builder.QueryParams,0)
 	if tmp,ok := queryParams.([]builder.QueryParams); ok {
 		params = tmp
@@ -230,7 +230,7 @@ func (i *repository) Count(ctx context.Context, queryParams interface{}) (total 
 	{{- range .Table.PrimaryKeys }}
 		{{- $db_primary_key = .Name}}
 	{{- end}}
-	tracks := make([]interface{}, 0)
+	tracks := make([]any, 0)
 	key := "{{- $primary_key }}"
 	shouldMerge := len(params) > 1
 	for _, param := range params {
@@ -290,14 +290,14 @@ func (i *repository) Count(ctx context.Context, queryParams interface{}) (total 
 }
 
 //insert: insert data with default value, use map to include nil value
-func (i *repository) Insert(ctx context.Context, model interface{}, usePreparedStatement bool) (id int64,err error) {
+func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement bool) (id int64,err error) {
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
 		} 
 	}()
-	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	var normalizedData map[string]any 
+	if tmp,ok := normalize(model).(map[string]any); ok {
 		normalizedData = tmp
 	} else {
 		err = errors.New("invalid_object")
@@ -350,7 +350,7 @@ func (i *repository) Insert(ctx context.Context, model interface{}, usePreparedS
 }
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
-func (i *repository) Update(ctx context.Context, model interface{}, queryParams interface{}) (err error) {
+func (i *repository) Update(ctx context.Context, model any, queryParams any) (err error) {
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
@@ -364,8 +364,8 @@ func (i *repository) Update(ctx context.Context, model interface{}, queryParams 
 	} else {
 		return errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
-	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	var normalizedData map[string]any 
+	if tmp,ok := normalize(model).(map[string]any); ok {
 		normalizedData = tmp
 	} else {
 		return errors.New("invalid_object")
@@ -426,15 +426,15 @@ func (i *repository) Update(ctx context.Context, model interface{}, queryParams 
 }
 
 //upsert : update or insert method that ignore any nil or empty value, use map to include nil value
-func (i *repository) Upsert(ctx context.Context, model interface{}, usePreparedStatement bool) (id int64,err error) {
+func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement bool) (id int64,err error) {
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			id = -1
 			err = tmp.(error) 
 		} 
 	}()
-	var normalizedData map[string]interface{} 
-	if tmp,ok := normalize(model).(map[string]interface{}); ok {
+	var normalizedData map[string]any 
+	if tmp,ok := normalize(model).(map[string]any); ok {
 		normalizedData = tmp
 	} else {
 		return 0, errors.New("invalid_object")
@@ -488,7 +488,7 @@ func (i *repository) Upsert(ctx context.Context, model interface{}, usePreparedS
 }
 
 //delete : delete method
-func (i *repository) Delete(ctx context.Context, queryParams interface{}) (err error) {
+func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
