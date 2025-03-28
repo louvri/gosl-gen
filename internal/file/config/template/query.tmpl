@@ -16,6 +16,7 @@ import (
 	"github.com/louvri/gosl/transformer"
 	"github.com/louvri/gosl/builder"
 	"github.com/jmoiron/sqlx"
+	"fmt"
 )
 
 var instance *repository
@@ -155,6 +156,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		stmt, values := q.Build()
 		var err error
 		var rows *sqlx.Rows
+		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, queryable.Key())
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
@@ -162,10 +164,10 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 				if err != nil {
 					return nil, err
 				}
-				i.cache.Set(stmt,*ps,cache.NoExpiration)
+				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			if tmp,found := i.cache.Get(stmt); found{
+			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
@@ -248,6 +250,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		q = where(q,param)
 		stmt, values := q.Build()
 		var row *_sql.Row
+		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, queryable.Key())
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
@@ -255,10 +258,10 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 				if err != nil {
 					return nil, err
 				}
-				i.cache.Set(stmt,*ps,cache.NoExpiration)
+				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			if tmp,found := i.cache.Get(stmt); found{
+			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
@@ -317,6 +320,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	q = q.Insert(normalizedData, db.Columns()...)
 	stmt, values := q.Build()
 	var result _sql.Result
+	stmtCacheKey := fmt.Sprintf("%s-%v", stmt, queryable.Key())
 	if usePreparedStatement {
 		var statement sqlx.Stmt
 		prepare := func () (*sqlx.Stmt,error){
@@ -324,10 +328,10 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 			if err != nil {
 				return nil, err
 			}
-			i.cache.Set(stmt,*ps,cache.NoExpiration)
+			i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 			return ps, nil
 		}
-		if tmp,found := i.cache.Get(stmt); found{
+		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
 			ps, err := prepare()
@@ -454,6 +458,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	q = q.Upsert(normalizedData, db.Columns()...)
 	stmt, values := q.Build()
 	var result _sql.Result
+	stmtCacheKey := fmt.Sprintf("%s-%v", stmt, queryable.Key())
 	if usePreparedStatement {
 		var statement sqlx.Stmt
 		prepare := func () (*sqlx.Stmt,error){
@@ -461,10 +466,10 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 			if err != nil {
 				return nil, err
 			}
-			i.cache.Set(stmt,*ps,cache.NoExpiration)
+			i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 			return ps, nil
 		}
-		if tmp,found := i.cache.Get(stmt); found{
+		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
 			ps, err := prepare()
@@ -521,6 +526,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 			return errors.New("Delete operation requires condition")
 		}
 		var result _sql.Result
+		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, queryable.Key())
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
@@ -528,10 +534,10 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 				if err != nil {
 					return nil, err
 				}
-				i.cache.Set(stmt,*ps,cache.NoExpiration)
+				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			if tmp,found := i.cache.Get(stmt); found{
+			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
