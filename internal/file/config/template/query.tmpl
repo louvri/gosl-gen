@@ -116,13 +116,19 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 	}
 	response := make([]db.Model,0)
 	var err error
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err = errors.New("database is not initialized")
-		level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-		return nil,err
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
-	queryable := ref.(*sql.Queryable)
 	{{- $primary_key := ""}}
 	{{- range .Table.PrimaryKeys }}
 		{{- $primary_key = .Name}}
@@ -177,9 +183,9 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 					statement = *ps
 				}
 			}
-			rows, err = statement.QueryxContext(ctx, values...)
+			rows, err = statement.QueryxContext(ictx.Base(), values...)
 		} else {
-			rows, err = queryable.QueryxContext(ctx, stmt, values...)
+			rows, err = queryable.QueryxContext(ictx.Base(), stmt, values...)
 		}
 		if err != nil && err != _sql.ErrNoRows {
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
@@ -221,13 +227,19 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 	} else {
 		return -1, errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err = errors.New("database is not initialized")
-		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
-		return -1, err
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
-	queryable := ref.(*sql.Queryable)
 	{{- $db_primary_key := ""}}
 	{{- range .Table.PrimaryKeys }}
 		{{- $db_primary_key = .Name}}
@@ -271,9 +283,9 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 					statement = *ps
 				}
 			}
-			row = statement.QueryRowContext(ctx, values...)
+			row = statement.QueryRowContext(ictx.Base(), values...)
 		} else {
-			row =  queryable.DB().QueryRowContext(ctx, stmt, values...)
+			row =  queryable.DB().QueryRowContext(ictx.Base(), stmt, values...)
 		}
 		var count int
 		err = row.Scan(&count)
@@ -307,14 +319,19 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		id = -1
 		return
 	}
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err = errors.New("database is not initialized")
-		id = -1
-		level.Error(i.logger).Log("{{- $packageName}}:repository:insert", err.Error())
-		return
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
-	queryable := ref.(*sql.Queryable)
 	q := builder.New()
 	q = q.From("`{{- $packageName}}`")
 	q = q.Insert(normalizedData, db.Columns()...)
@@ -341,13 +358,13 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
-			result = tx.MustExecContext(ctx, values...)
+		if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
+			result = tx.MustExecContext(ictx.Base(), values...)
 		} else {
-			result = statement.MustExecContext(ctx, values...)
+			result = statement.MustExecContext(ictx.Base(), values...)
 		}
 	} else {
-		result = queryable.MustExecContext(ctx, stmt, values...)
+		result = queryable.MustExecContext(ictx.Base(), stmt, values...)
 	}
 	id,err = result.LastInsertId()
 	return 
@@ -374,14 +391,20 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 	} else {
 		return errors.New("invalid_object")
 	}
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err = errors.New("database is not initialized")
-		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
-		return
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
 	var isUpdated bool
-	queryable := ref.(*sql.Queryable)
 	for _,param := range params { 
 		normalize(&param)
 		q := builder.New()
@@ -410,13 +433,13 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 					statement = *ps
 				}
 			}
-			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
-				result = tx.MustExecContext(ctx, values...)
+			if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
+				result = tx.MustExecContext(ictx.Base(), values...)
 			} else {
-				result = statement.MustExecContext(ctx, values...)
+				result = statement.MustExecContext(ictx.Base(), values...)
 			}
 		} else {
-			result = queryable.MustExecContext(ctx, stmt, values...)
+			result = queryable.MustExecContext(ictx.Base(), stmt, values...)
 		}
 		rowsAffected := int64(0)
 		if rowsAffected, err = result.RowsAffected();  rowsAffected > 0 {
@@ -446,13 +469,19 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	if len(normalizedData) == 0 {
 		return 0, errors.New("invalid_object")
 	}
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err := errors.New("database is not initialized")
-		level.Error(i.logger).Log("{{- $packageName}}:repository:count", err.Error())
-		return -1,err
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
-	queryable := ref.(*sql.Queryable)
 	q := builder.New()
 	q = q.From("`{{- $packageName}}`")
 	q = q.Upsert(normalizedData, db.Columns()...)
@@ -479,13 +508,13 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
-			result = tx.MustExecContext(ctx, values...)
+		if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
+			result = tx.MustExecContext(ictx.Base(), values...)
 		} else {
-			result = statement.MustExecContext(ctx, values...)
+			result = statement.MustExecContext(ictx.Base(), values...)
 		}
 	} else {
-		result = queryable.MustExecContext(ctx, stmt, values...)
+		result = queryable.MustExecContext(ictx.Base(), stmt, values...)
 	}
 	id,err = result.LastInsertId()
 	return 
@@ -507,14 +536,20 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 	} else {
 		return errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
-	ref := ctx.Value(sql.SQL_KEY)
-	if ref == nil {
-		err := errors.New("database is not initialized")
-		level.Error(i.logger).Log("{{- $packageName}}:repository:delete", err.Error())
-		return err
+	var queryable *gosl.Queryable
+	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	if ok {
+		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+	} else {
+		ref := ctx.Value(sql.SQL_KEY)
+		if ref == nil {
+			err = errors.New("database is not initialized")
+			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
+			return nil,err
+		}
+		queryable = ref.(*sql.Queryable)
 	}
 	var isDeleted bool
-	queryable := ref.(*sql.Queryable)
 	for _,param := range params {
 		normalize(&param)
 		q := builder.New()
@@ -547,13 +582,13 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 					statement = *ps
 				}
 			}
-			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
-				result = tx.MustExecContext(ctx, values...)
+			if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
+				result = tx.MustExecContext(ictx.Base(), values...)
 			} else {
-				result = statement.MustExecContext(ctx, values...)
+				result = statement.MustExecContext(ictx.Base(), values...)
 			}
 		} else {
-			result = queryable.MustExecContext(ctx, stmt, values...)
+			result = queryable.MustExecContext(ictx.Base(), stmt, values...)
 		}
 		rowsAffected := int64(0)
 		if rowsAffected, err = result.RowsAffected();  rowsAffected > 0 {
