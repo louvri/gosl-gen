@@ -116,10 +116,10 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 	}
 	response := make([]db.Model,0)
 	var err error
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -227,10 +227,10 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 	} else {
 		return -1, errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -319,10 +319,10 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		id = -1
 		return
 	}
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -391,10 +391,10 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 	} else {
 		return errors.New("invalid_object")
 	}
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -469,10 +469,10 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	if len(normalizedData) == 0 {
 		return 0, errors.New("invalid_object")
 	}
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -536,10 +536,10 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 	} else {
 		return errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
-	var queryable *gosl.Queryable
-	ictx, ok := ctx.Value(gosl.INTERNAL_CONTEXT).(*gosl.InternalContext)
+	var queryable *sql.Queryable
+	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
-		queryable = ictx.Get(gosl.SQL_KEY).(*gosl.Queryable)
+		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
