@@ -403,7 +403,6 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 	var active_key any
 	var queryable *sql.Queryable
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
-	var active_key any
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
 		ctx = ictx.Base()
