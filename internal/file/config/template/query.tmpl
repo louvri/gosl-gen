@@ -120,6 +120,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -183,9 +184,9 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 					statement = *ps
 				}
 			}
-			rows, err = statement.QueryxContext(ictx.Base(), values...)
+			rows, err = statement.QueryxContext(ctx, values...)
 		} else {
-			rows, err = queryable.QueryxContext(ictx.Base(), stmt, values...)
+			rows, err = queryable.QueryxContext(ctx, stmt, values...)
 		}
 		if err != nil && err != _sql.ErrNoRows {
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
@@ -231,6 +232,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -283,9 +285,9 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 					statement = *ps
 				}
 			}
-			row = statement.QueryRowContext(ictx.Base(), values...)
+			row = statement.QueryRowContext(ctx, values...)
 		} else {
-			row =  queryable.DB().QueryRowContext(ictx.Base(), stmt, values...)
+			row =  queryable.DB().QueryRowContext(ctx, stmt, values...)
 		}
 		var count int
 		err = row.Scan(&count)
@@ -323,6 +325,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -358,13 +361,13 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
-			result = tx.MustExecContext(ictx.Base(), values...)
+		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
+			result = tx.MustExecContext(ctx, values...)
 		} else {
-			result = statement.MustExecContext(ictx.Base(), values...)
+			result = statement.MustExecContext(ctx, values...)
 		}
 	} else {
-		result = queryable.MustExecContext(ictx.Base(), stmt, values...)
+		result = queryable.MustExecContext(ctx, stmt, values...)
 	}
 	id,err = result.LastInsertId()
 	return 
@@ -395,6 +398,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -433,13 +437,13 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 					statement = *ps
 				}
 			}
-			if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
-				result = tx.MustExecContext(ictx.Base(), values...)
+			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
+				result = tx.MustExecContext(ctx, values...)
 			} else {
-				result = statement.MustExecContext(ictx.Base(), values...)
+				result = statement.MustExecContext(ctx, values...)
 			}
 		} else {
-			result = queryable.MustExecContext(ictx.Base(), stmt, values...)
+			result = queryable.MustExecContext(ctx, stmt, values...)
 		}
 		rowsAffected := int64(0)
 		if rowsAffected, err = result.RowsAffected();  rowsAffected > 0 {
@@ -473,6 +477,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -508,13 +513,13 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
-			result = tx.MustExecContext(ictx.Base(), values...)
+		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
+			result = tx.MustExecContext(ctx, values...)
 		} else {
-			result = statement.MustExecContext(ictx.Base(), values...)
+			result = statement.MustExecContext(ctx, values...)
 		}
 	} else {
-		result = queryable.MustExecContext(ictx.Base(), stmt, values...)
+		result = queryable.MustExecContext(ctx, stmt, values...)
 	}
 	id,err = result.LastInsertId()
 	return 
@@ -540,6 +545,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 	ictx, ok := ctx.Value(sql.INTERNAL_CONTEXT).(*sql.InternalContext)
 	if ok {
 		queryable = ictx.Get(sql.SQL_KEY).(*sql.Queryable)
+		ctx = ictx.Base()
 	} else {
 		ref := ctx.Value(sql.SQL_KEY)
 		if ref == nil {
@@ -582,13 +588,13 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 					statement = *ps
 				}
 			}
-			if tx := queryable.StmtxContext(ictx.Base(), statement); tx != nil {
-				result = tx.MustExecContext(ictx.Base(), values...)
+			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
+				result = tx.MustExecContext(ctx, values...)
 			} else {
-				result = statement.MustExecContext(ictx.Base(), values...)
+				result = statement.MustExecContext(ctx, values...)
 			}
 		} else {
-			result = queryable.MustExecContext(ictx.Base(), stmt, values...)
+			result = queryable.MustExecContext(ctx, stmt, values...)
 		}
 		rowsAffected := int64(0)
 		if rowsAffected, err = result.RowsAffected();  rowsAffected > 0 {
