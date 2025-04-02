@@ -400,7 +400,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return -1,err
+			return err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
