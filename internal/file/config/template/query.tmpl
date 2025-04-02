@@ -236,7 +236,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return nil,err
+			return -1,err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
@@ -328,7 +328,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return nil,err
+			return -1,err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
@@ -400,7 +400,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return nil,err
+			return err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
@@ -478,7 +478,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return nil,err
+			return 0,err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
@@ -545,7 +545,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		if ref == nil {
 			err = errors.New("database is not initialized")
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
-			return nil,err
+			return err
 		}
 		queryable = ref.(*sql.Queryable)
 	}
