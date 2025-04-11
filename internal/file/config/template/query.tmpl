@@ -706,10 +706,10 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return -1, err
+			return err
 		}
 		if err := gz.Close(); err != nil {
-			return -1, err
+			return err
 		}
 		stmtCacheKey = b.String()
 
