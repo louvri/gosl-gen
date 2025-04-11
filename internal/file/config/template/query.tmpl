@@ -37,6 +37,7 @@ func New(logger log.Logger) base.Repository {
 		instance = &repository{
 			logger: logger,
 			cache: cache.New(23*time.Hour,24*time.Hour),
+			locks: make(map[string]*sync.Mutex),
 		}
 	}
 	return instance
