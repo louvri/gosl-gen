@@ -302,10 +302,10 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return nil, err
+			return -1, err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return -1, err
 		}
 		stmtCacheKey = b.String()
 
@@ -403,10 +403,10 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return nil, err
+			return -1, err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return -1, err
 		}
 		stmtCacheKey = b.String()
 
@@ -505,10 +505,10 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return nil, err
+			return err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return err
 		}
 		stmtCacheKey = b.String()
 
@@ -606,10 +606,10 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return nil, err
+			return -1, err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return -1, err
 		}
 		stmtCacheKey = b.String()
 
@@ -706,10 +706,10 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		var b bytes.Buffer
 		gz := gzip.NewWriter(&b)
 		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return nil, err
+			return -1, err
 		}
 		if err := gz.Close(); err != nil {
-			return nil, err
+			return -1, err
 		}
 		stmtCacheKey = b.String()
 
