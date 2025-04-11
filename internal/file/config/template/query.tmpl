@@ -193,7 +193,8 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		}
 		i.lockMu.Unlock()
 
-		
+		mu.Lock()
+		defer mu.Unlock()
 
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
@@ -205,8 +206,6 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			mu.Lock()
-		
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
@@ -217,7 +216,6 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 					statement = *ps
 				}
 			}
-			mu.Unlock()
 			rows, err = statement.QueryxContext(ctx, values...)
 		} else {
 			rows, err = queryable.QueryxContext(ctx, stmt, values...)
@@ -321,7 +319,8 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		}
 		i.lockMu.Unlock()
 
-		
+		mu.Lock()
+		defer mu.Unlock()
 
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
@@ -333,7 +332,6 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			mu.Lock()
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
@@ -344,7 +342,6 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 					statement = *ps
 				}
 			}
-			mu.Unlock()
 			row = statement.QueryRowContext(ctx, values...)
 		} else {
 			row =  queryable.DB().QueryRowContext(ctx, stmt, values...)
@@ -423,6 +420,8 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		}
 		i.lockMu.Unlock()
 
+		mu.Lock()
+		defer mu.Unlock()
 
 	if usePreparedStatement {
 		var statement sqlx.Stmt
@@ -434,8 +433,6 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 			i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 			return ps, nil
 		}
-
-		mu.Lock()
 		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
@@ -446,8 +443,6 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		mu.Unlock()
-		
 		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 			result = tx.MustExecContext(ctx, values...)
 		} else {
@@ -527,6 +522,9 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		}
 		i.lockMu.Unlock()
 
+		mu.Lock()
+		defer mu.Unlock()
+
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
@@ -537,7 +535,6 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			mu.Lock()
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
@@ -548,7 +545,6 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 					statement = *ps
 				}
 			}
-			mu.Unlock()
 			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 				result = tx.MustExecContext(ctx, values...)
 			} else {
@@ -627,6 +623,8 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 		}
 		i.lockMu.Unlock()
 
+		mu.Lock()
+		defer mu.Unlock()
 		
 	if usePreparedStatement {
 		var statement sqlx.Stmt
@@ -638,7 +636,6 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 			i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 			return ps, nil
 		}
-		mu.Lock()
 		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
@@ -649,7 +646,6 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 				statement = *ps
 			}
 		}
-		mu.Unlock()
 		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 			result = tx.MustExecContext(ctx, values...)
 		} else {
@@ -726,6 +722,9 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 			i.locks[stmtCacheKey] = mu
 		}
 		i.lockMu.Unlock()
+
+		mu.Lock()
+		defer mu.Unlock()
 		
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
@@ -737,7 +736,6 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 				i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
 				return ps, nil
 			}
-			mu.Lock()
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
@@ -748,7 +746,6 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 					statement = *ps
 				}
 			}
-			mu.Unlock()
 			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 				result = tx.MustExecContext(ctx, values...)
 			} else {
