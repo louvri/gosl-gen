@@ -28,8 +28,8 @@ var instance *repository
 type repository struct {
 	logger log.Logger
 	cache *cache.Cache
-	locks  map[string]*sync.RwMutex
-	lockMu sync.RwMutex
+	locks  map[string]*sync.RWMutex
+	lockMu sync.RWMutex
 }
 
 func New(logger log.Logger) base.Repository {
@@ -37,7 +37,7 @@ func New(logger log.Logger) base.Repository {
 		instance = &repository{
 			logger: logger,
 			cache: cache.New(23*time.Hour,24*time.Hour),
-			locks: make(map[string]*sync.RwMutex),
+			locks: make(map[string]*sync.RWMutex),
 		}
 	}
 	return instance
