@@ -186,13 +186,11 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 
 		if param.UsePreparedStatement {
 			i.lockMu.Lock()
-
 			mu, ok := i.locks[stmtCacheKey]
 			if !ok {
 				mu = &sync.RWMutex{}
 				i.locks[stmtCacheKey] = mu
 			}
-
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
 				ps, err := queryable.Preparex(stmt,false)
@@ -314,13 +312,11 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		
 		if param.UsePreparedStatement {
 			i.lockMu.Lock()
-
 			mu, ok := i.locks[stmtCacheKey]
 			if !ok {
 				mu = &sync.RWMutex{}
 				i.locks[stmtCacheKey] = mu
 			}
-
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
 				ps, err := queryable.Preparex(stmt,false)
@@ -367,15 +363,15 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 	return total, nil
 }
 
-//insert: insert data with default value, use map to include nil value
-func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement bool) (id int64,err error) {
-	defer func(){ 
-		if tmp := recover(); tmp != nil { 
-			err = tmp.(error) 
-		} 
+// insert: insert data with default value, use map to include nil value
+func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement bool) (id int64, err error) {
+	defer func() {
+		if tmp := recover(); tmp != nil {
+			err = tmp.(error)
+		}
 	}()
-	var normalizedData map[string]any 
-	if tmp,ok := normalize(model).(map[string]any); ok {
+	var normalizedData map[string]any
+	if tmp, ok := normalize(model).(map[string]any); ok {
 		normalizedData = tmp
 	} else {
 		err = errors.New("invalid_object")
@@ -398,6 +394,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		}
 		queryable = ref.(*sql.Queryable)
 	}
+
 	q := builder.New()
 	q = q.From("`{{- $packageName}}`")
 	q = q.Insert(normalizedData, db.Columns()...)
@@ -406,15 +403,14 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
 
 	var b bytes.Buffer
-		gz := gzip.NewWriter(&b)
-		if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
-			return -1, err
-		}
-		if err := gz.Close(); err != nil {
-			return -1, err
-		}
-		stmtCacheKey = b.String()
-		
+	gz := gzip.NewWriter(&b)
+	if _, err := gz.Write([]byte(stmtCacheKey)); err != nil {
+		return -1, err
+	}
+	if err := gz.Close(); err != nil {
+		return -1, err
+	}
+	stmtCacheKey = b.String()
 	if usePreparedStatement {
 		i.lockMu.Lock()
 		mu, ok := i.locks[stmtCacheKey]
@@ -423,23 +419,24 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 			i.locks[stmtCacheKey] = mu
 		}
 		var statement sqlx.Stmt
-		prepare := func () (*sqlx.Stmt,error){
-			ps, err := queryable.Preparex(stmt,false)
+		prepare := func() (*sqlx.Stmt, error) {
+			ps, err := queryable.Preparex(stmt, false)
 			if err != nil {
 				return nil, err
 			}
-			i.cache.Set(stmtCacheKey,*ps,cache.NoExpiration)
+			i.cache.Set(stmtCacheKey, *ps, cache.NoExpiration)
 			return ps, nil
 		}
 		mu.Lock()
-		if tmp,found := i.cache.Get(stmtCacheKey); found{
+
+		if tmp, found := i.cache.Get(stmtCacheKey); found {
 			statement = tmp.(sqlx.Stmt)
 		} else {
 			ps, err := prepare()
 			if err != nil {
 				i.lockMu.Unlock()
 				mu.Unlock()
-				return -1,err
+				return -1, err
 			} else {
 				statement = *ps
 			}
@@ -454,8 +451,8 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	} else {
 		result = queryable.MustExecContext(ctx, stmt, values...)
 	}
-	id,err = result.LastInsertId()
-	return 
+	id, err = result.LastInsertId()
+	return
 }
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
@@ -520,13 +517,11 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 
 		if param.UsePreparedStatement {
 			i.lockMu.Lock()
-
 			mu, ok := i.locks[stmtCacheKey]
 			if !ok {
 				mu = &sync.RWMutex{}
 				i.locks[stmtCacheKey] = mu
 			}
-
 			var statement sqlx.Stmt
 			prepare := func () (*sqlx.Stmt,error){
 				ps, err := queryable.Preparex(stmt,false)
@@ -624,7 +619,6 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 		
 	if usePreparedStatement {
 		i.lockMu.Lock()
-
 		mu, ok := i.locks[stmtCacheKey]
 		if !ok {
 			mu = &sync.RWMutex{}
@@ -729,7 +723,6 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		
 		if param.UsePreparedStatement {
 			i.lockMu.Lock()
-
 			mu, ok := i.locks[stmtCacheKey]
 			if !ok {
 				mu = &sync.RWMutex{}
