@@ -724,13 +724,13 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 
 
 func (i *repository) getLockKey(statementKey string) *sync.Mutex {
-	l.mu.Lock()
-	defer l.mu.Unlock()
+	i.mu.Lock()
+	defer i.mu.Unlock()
 
-	mu, ok := l.locks[statementKey]
+	mu, ok := i.locks[statementKey]
 	if !ok {
 		mu = &sync.Mutex{}
-		l.locks[statementKey] = mu
+		i.locks[statementKey] = mu
 	}
 	return mu
 }
