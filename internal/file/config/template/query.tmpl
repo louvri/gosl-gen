@@ -199,17 +199,18 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 				return ps, nil
 			}
 			mu.Lock()
-			defer mu.Unlock()
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
 				if err != nil {
+					mu.Unlock()
 					return nil,err
 				} else {
 					statement = *ps
 				}
 			}
+			mu.Unlock()
 			rows, err = statement.QueryxContext(ctx, values...)
 		} else {
 			rows, err = queryable.QueryxContext(ctx, stmt, values...)
@@ -318,17 +319,19 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 				return ps, nil
 			}
 			mu.Lock()
-			defer mu.Unlock()
+			
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
 				if err != nil {
+					mu.Unlock()
 					return -1,err
 				} else {
 					statement = *ps
 				}
 			}
+			mu.Unlock()
 			row = statement.QueryRowContext(ctx, values...)
 		} else {
 			row =  queryable.DB().QueryRowContext(ctx, stmt, values...)
@@ -412,17 +415,18 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 			return ps, nil
 		}
 		mu.Lock()
-		defer mu.Unlock()
 		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
 			ps, err := prepare()
 			if err != nil {
+				mu.Unlock()
 				return -1,err
 			} else {
 				statement = *ps
 			}
 		}
+		mu.Unlock()
 		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 			result = tx.MustExecContext(ctx, values...)
 		} else {
@@ -506,17 +510,18 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 				return ps, nil
 			}
 			mu.Lock()
-			defer mu.Unlock()
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
 				ps, err := prepare()
 				if err != nil {
+					mu.Unlock()
 					return err
 				} else {
 					statement = *ps
 				}
 			}
+			mu.Unlock()
 			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 				result = tx.MustExecContext(ctx, values...)
 			} else {
@@ -599,17 +604,19 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 			return ps, nil
 		}
 		mu.Lock()
-		defer mu.Unlock()
+		
 		if tmp,found := i.cache.Get(stmtCacheKey); found{
 			statement = tmp.(sqlx.Stmt)
 		} else {
 			ps, err := prepare()
 			if err != nil {
+				mu.Unlock()
 				return -1,err
 			} else {
 				statement = *ps
 			}
 		}
+		mu.Unlock()
 		if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 			result = tx.MustExecContext(ctx, values...)
 		} else {
@@ -692,7 +699,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 				return ps, nil
 			}
 			mu.Lock()
-			defer mu.Unlock()
+			
 			if tmp,found := i.cache.Get(stmtCacheKey); found{
 				statement = tmp.(sqlx.Stmt)
 			} else {
@@ -700,9 +707,11 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 				if err != nil {
 					return err
 				} else {
+					mu.Unlock()
 					statement = *ps
 				}
 			}
+			mu.Unlock()
 			if tx := queryable.StmtxContext(ctx, statement); tx != nil {
 				result = tx.MustExecContext(ctx, values...)
 			} else {
