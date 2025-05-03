@@ -184,14 +184,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 
 		
 
@@ -311,14 +304,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 
 		
 		if param.UsePreparedStatement {
@@ -412,14 +398,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 
 		
 	if usePreparedStatement {
@@ -514,14 +493,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 
 		if param.UsePreparedStatement {
 			var statement sqlx.Stmt
@@ -614,14 +586,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 		
 	if usePreparedStatement {
 		var statement sqlx.Stmt
@@ -713,14 +678,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		}
 		stmtCacheKey = b.String()
 
-		// Lock per key to avoid race
-		i.lockMu.Lock()
-		mu, ok := i.locks[stmtCacheKey]
-		if !ok {
-			mu = &sync.Mutex{}
-			i.locks[stmtCacheKey] = mu
-		}
-		i.lockMu.Unlock()
+		mu := i.getLockKey(stmtCacheKey)
 
 		
 		if param.UsePreparedStatement {
@@ -762,4 +720,17 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		err = errors.New("no_changes")
 	}
 	return
+}
+
+
+func (i *repository) getLockKey(statementKey string) *sync.Mutex {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	mu, ok := l.locks[statementKey]
+	if !ok {
+		mu = &sync.Mutex{}
+		l.locks[statementKey] = mu
+	}
+	return mu
 }
