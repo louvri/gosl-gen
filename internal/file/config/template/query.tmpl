@@ -23,7 +23,10 @@ import (
 	"fmt"
 )
 
-var instance *repository
+var (
+	instance *repository
+	once sync.Once
+)
 
 type repository struct {
 	logger log.Logger
@@ -33,13 +36,13 @@ type repository struct {
 }
 
 func New(logger log.Logger) base.Repository {
-	if instance == nil {
+	once.Do(func() {
 		instance = &repository{
 			logger: logger,
 			cache: cache.New(23*time.Hour,24*time.Hour),
 			locks: make(map[string]*sync.RWMutex),
 		}
-	}
+	})
 	return instance
 }
 
