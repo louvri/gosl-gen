@@ -90,7 +90,7 @@ func (i *repository) Set(ctx context.Context, model any, usePreparedStatement bo
 func (i *repository) Query(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error) {
 	defer func() {
 		if tmp := recover(); tmp != nil {
-			err = tmp.(error)
+			err := tmp.(error)
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 		}
 	}()
@@ -261,7 +261,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 func (i *repository) Count(ctx context.Context, queryParams any) (total int, err error) {
 	defer func() {
 		if tmp := recover(); tmp != nil {
-			err = tmp.(error)
+			err := tmp.(error)
 			level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error())
 		}
 	}()
