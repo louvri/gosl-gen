@@ -95,7 +95,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		if tmp := recover(); tmp != nil {
 			err := tmp.(error)
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		}
 	}()
@@ -270,7 +270,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		if tmp := recover(); tmp != nil {
 			err := tmp.(error)
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		}
 	}()
@@ -393,7 +393,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		} 
 	}()
@@ -491,7 +491,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error)
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		} 
 	}()
@@ -608,7 +608,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 			id = -1
 			err = tmp.(error) 
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		} 
 	}()
@@ -709,7 +709,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
 			if ignore, ok := ctx.Value(sql.DONT_PRINT_SQL_ERROR).(string); ok && !strings.Contains(err.Error(),ignore) || !ok {
-				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,values)
+				level.Error(i.logger).Log("{{- $packageName}}:repository:query", err.Error(),stmt,fmt.Sprintf("%v",values))
 			} 
 		} 
 	}()
