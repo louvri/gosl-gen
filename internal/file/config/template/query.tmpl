@@ -88,6 +88,8 @@ func (i *repository) Set(ctx context.Context, model any, usePreparedStatement bo
 }
 
 func (i *repository) Query(ctx context.Context, queryParams any, trans ...transformer.Transformer) (any,error) {
+	var stmt string 
+	var values []any
 	defer func() {
 		if tmp := recover(); tmp != nil {
 			err := tmp.(error)
@@ -177,7 +179,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		}
 		q = next(q,param,key,tracks)
 		q = where(q,param)
-		stmt, values := q.Build()
+		stmt, values = q.Build()
 		var err error
 		var rows *sqlx.Rows
 		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
@@ -261,6 +263,8 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 }
 
 func (i *repository) Count(ctx context.Context, queryParams any) (total int, err error) {
+	var stmt string
+	var values []any
 	defer func() {
 		if tmp := recover(); tmp != nil {
 			err := tmp.(error)
@@ -313,7 +317,7 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 		q = q.Select("COUNT({{- $db_primary_key}}) as total")
 		q = next(q,param,key,tracks)
 		q = where(q,param)
-		stmt, values := q.Build()
+		stmt, values = q.Build()
 		var row *_sql.Row
 		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
 
@@ -382,6 +386,8 @@ func (i *repository) Count(ctx context.Context, queryParams any) (total int, err
 
 //insert: insert data with default value, use map to include nil value
 func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement bool) (id int64,err error) {
+	var stmt string 
+	var values []any
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
@@ -417,7 +423,7 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 	q := builder.New()
 	q = q.From("`{{- $packageName}}`")
 	q = q.Insert(normalizedData, db.Columns()...)
-	stmt, values := q.Build()
+	stmt, values = q.Build()
 	var result _sql.Result
 	stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
 
@@ -478,6 +484,8 @@ func (i *repository) Insert(ctx context.Context, model any, usePreparedStatement
 
 //update : update method that ignore any nil or empty value if supplied values is object, use map to include nil value
 func (i *repository) Update(ctx context.Context, model any, queryParams any) (err error) {
+	var stmt string 
+	var values []any
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error)
@@ -523,7 +531,7 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 		q = q.From("`{{- $packageName}}`")
 		q = q.Update(normalizedData, db.Columns()...)
 		q = where(q, param)
-		stmt, values := q.Build()
+		stmt, values = q.Build()
 		var result _sql.Result
 		stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
 
@@ -592,6 +600,8 @@ func (i *repository) Update(ctx context.Context, model any, queryParams any) (er
 
 //upsert : update or insert method that ignore any nil or empty value, use map to include nil value
 func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement bool) (id int64,err error) {
+	var stmt string 
+	var values []any
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			id = -1
@@ -629,7 +639,7 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 	q := builder.New()
 	q = q.From("`{{- $packageName}}`")
 	q = q.Upsert(normalizedData, db.Columns()...)
-	stmt, values := q.Build()
+	stmt, values = q.Build()
 	var result _sql.Result
 	stmtCacheKey := fmt.Sprintf("%s-%v", stmt, active_key)
 
@@ -692,6 +702,8 @@ func (i *repository) Upsert(ctx context.Context, model any, usePreparedStatement
 
 //delete : delete method
 func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
+	var stmt string 
+	var values []any
 	defer func(){ 
 		if tmp := recover(); tmp != nil { 
 			err = tmp.(error) 
@@ -731,7 +743,7 @@ func (i *repository) Delete(ctx context.Context, queryParams any) (err error) {
 		q = q.Delete()
 		q = q.From("`{{- $packageName}}`")
 		q = where(q, param)
-		stmt, values := q.Build()
+		stmt, values = q.Build()
 		if stmt == "" {
 			return errors.New("Delete operation requires condition")
 		}
