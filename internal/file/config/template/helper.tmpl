@@ -428,7 +428,7 @@ func normalize(data any) any {
     return nil
 }
 
-func scan(rows any, filter map[string]bool, trans ...transformer.Transformer) (*db.Model, error) {
+func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*db.Model, error) {
     var err error
     var result db.Model
     var _row *sqlx.Row

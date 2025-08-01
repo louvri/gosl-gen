@@ -108,11 +108,7 @@ func (i *repository) Query(ctx context.Context, queryParams any, trans ...transf
 		return nil, errors.New("builder.QueryParams_mandatory_should_be_array_or_single")
 	}
 	read := func (rows *sqlx.Rows, indexedfilter map[string]bool) (*db.Model, error){
-		var local transformer.Transformer 
-		if len(trans) > 0 {
-			local = trans[0]
-		}
-		result, err := scan(rows, indexedfilter, local)
+		result, err := scan(rows, indexedfilter, trans)
 		if err != nil && err != _sql.ErrNoRows {
 			return nil, err
 		}
