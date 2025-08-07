@@ -11,7 +11,6 @@ import (
 	"time"
     "github.com/louvri/gosl/builder"
 	db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
-    "strconv"
     "github.com/louvri/gosl/transformer"
 )
 
@@ -431,6 +430,7 @@ func normalize(data any) any {
 func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*db.Model, error) {
     var err error
     var result db.Model
+    var scanned db.RawScan
     var _row *sqlx.Row
     var _rows *sqlx.Rows
     var ok bool
@@ -441,18 +441,9 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
             return nil,errors.New("wrong type of sql.row")
         }
     }
-    tobeScanned := make(map[string]any, 0)
-    if _rows != nil {
-        err = _rows.MapScan(tobeScanned)
-    } else if _row != nil {
-        err = _row.MapScan(tobeScanned)
-    }
-    if err != nil && err != _sql.ErrNoRows {
-        return nil,err
-    } else if err != nil && err == _sql.ErrNoRows {
-        return nil,nil
-    }
-     isFilterEmpty := len(filter) == 0
+    
+    tobeScanned := make([]any,0)
+   isFilterEmpty := len(filter) == 0
     {{- range .Table.Columns }}
             {{- $objectProperty := ""}}
             {{- $tokens := split .Name "_"}}
@@ -460,57 +451,21 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
                 {{- $objectProperty = (print $objectProperty (title $element))}}
             {{- end}}
             if isFilterEmpty || filter["`{{.Name}}`"] {
-                var tmp string
-                if tobeScanned["{{.Name}}"] != nil {
-                    if convByte, ok := tobeScanned["{{.Name}}"].([]uint8); ok {
-                        tmp = string(convByte)
-                    } else {
-                        tmp = fmt.Sprintf("%v", tobeScanned["{{.Name}}"])
-                    }
-                    {{if  eq .Type "float32" }}
-                    if conv, err := strconv.ParseFloat(tmp, 32); err != nil {
-                        return nil, err
-                    } else {
-                    result.{{$objectProperty}} =  conv
-                    }
-                  {{else if  eq .Type "float64" }}
-                   if conv, err := strconv.ParseFloat(tmp, 64); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                 {{else if eq .Type "int" }}
-                    if conv, err := strconv.Atoi(tmp); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                  {{else if eq .Type "int32" }}
-                     if conv, err := strconv.ParseInt(tmp,10, 32); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                  {{else if eq .Type "int64" }}
-                      if conv, err := strconv.ParseInt(tmp,10, 64); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                {{else if eq .Type "bool"}}
-                   if conv, err := strconv.ParseBool(s); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                {{else}}
-                    result.{{$objectProperty}} = tmp
-                 {{end}}  
-                } 
-                
-                
+                tobeScanned = append(tobeScanned, &scanned.{{$objectProperty}})
             }
     {{- end}}
+
+    
+    if _rows != nil {
+        err = _rows.Scan(tobeScanned...)
+    } else if _row != nil {
+        err = _row.Scan(tobeScanned...)
+    }
+    if err != nil && err != _sql.ErrNoRows {
+        return nil,err
+    } else if err != nil && err == _sql.ErrNoRows {
+        return nil,nil
+    }
 
     if len(trans) > 0 {
         var out any
@@ -528,5 +483,6 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
             }
         }
     }
+    result = scanned.CastToModel()
     return &result,nil
 }
