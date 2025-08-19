@@ -14,6 +14,130 @@ import (
     "github.com/louvri/gosl/transformer"
 )
 
+type RawScan struct {
+{{- range .Table.Columns }}
+    {{- if eq .Type "bool"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullBool `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}  
+{{- range .Table.Columns }}
+    {{- if eq .Type "int"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt16 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "int32"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt32 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "int64"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt64 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "float32"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullFloat32 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "float64"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullFloat64 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "[]byte"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullByte `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "string"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "sql.NullString"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "uuid.UUID"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.Null{{.GoType}} `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "time.Time"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "sql.NullTime"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+    Defaults map[string]any
+}
+
 func buildSelection(indexFilter map[string]bool) string {
 	var builder strings.Builder
 	isFilterEmpty := len(indexFilter) == 0
@@ -430,7 +554,7 @@ func normalize(data any) any {
 func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*db.Model, error) {
     var err error
     var result db.Model
-    var scanned db.RawScan
+    var scanned RawScan
     var _row *sqlx.Row
     var _rows *sqlx.Rows
     var ok bool
