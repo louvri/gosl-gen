@@ -469,6 +469,7 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
 
     if len(trans) > 0 {
         var out any
+        out = result
         var err error
         if trans[0].Transform != nil {
             out, err = trans[0].Transform(result)
