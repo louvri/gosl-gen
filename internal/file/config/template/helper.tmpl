@@ -12,6 +12,7 @@ import (
     "github.com/louvri/gosl/builder"
 	db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
     "github.com/louvri/gosl/transformer"
+    "database/sql"
 )
 
 type RawScan struct {
@@ -610,4 +611,41 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
     }
     result = scanned.CastToModel()
     return &result,nil
+}
+
+func (r *RawScan) CastToModel() db.Model {
+    var m db.Model
+     {{- range .Table.Columns }}
+        {{- $field := "" }}
+        {{- $objectProperty := ""}}
+        {{- $tokens := split .Name "_" }}
+        {{- range $index, $element := $tokens }}
+            {{- if eq $index 0 }}
+                {{- $field = (print $field $element)}}
+            {{- else }}
+                {{- $field = (print $field (title $element))}}
+            {{- end }}
+            {{- $objectProperty = (print $objectProperty (title $element))}}
+        {{- end }}
+        {{- if (eq .Type "bool")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Bool
+        {{- else if (eq .Type "string")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.String
+        {{- else if (eq .Type "int")}}
+            m.{{- $objectProperty}} = int(r.{{- $objectProperty}}.Int16)
+        {{- else if (eq .Type "int32")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Int32
+        {{- else if (eq .Type "int64")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Int64
+        {{- else if (eq .Type "float32")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Float32
+        {{- else if (eq .Type "float64")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Float64
+        {{- else if (eq .Type "[]byte")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Byte
+        {{- else }}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.String
+        {{- end}}
+    {{- end }}
+    return m
 }
