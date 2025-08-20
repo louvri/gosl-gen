@@ -11,9 +11,133 @@ import (
 	"time"
     "github.com/louvri/gosl/builder"
 	db "$PROJECT_PATH/$MODEL_PATH/{{$packageName}}"
-    "strconv"
     "github.com/louvri/gosl/transformer"
+    "database/sql"
 )
+
+type RawScan struct {
+{{- range .Table.Columns }}
+    {{- if eq .Type "bool"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullBool `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}  
+{{- range .Table.Columns }}
+    {{- if eq .Type "int"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt16 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "int32"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt32 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "int64"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullInt64 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "float32"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullFloat32 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "float64"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullFloat64 `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "[]byte"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullByte `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "string"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "sql.NullString"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "uuid.UUID"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.Null{{.GoType}} `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "time.Time"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+{{- range .Table.Columns }}
+    {{- if eq .Type "sql.NullTime"}}
+    {{- $field := ""}}
+    {{- $tokens := split .Name "_"}}
+    {{- range $index , $element := $tokens}}
+        {{- $field = (print $field (title $element))}}
+    {{- end}}
+    {{$field}} sql.NullString `db:"{{- .Name}}"`
+    {{- end}}
+{{- end}}
+    Defaults map[string]any
+}
 
 func buildSelection(indexFilter map[string]bool) string {
 	var builder strings.Builder
@@ -431,6 +555,7 @@ func normalize(data any) any {
 func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*db.Model, error) {
     var err error
     var result db.Model
+    var scanned RawScan
     var _row *sqlx.Row
     var _rows *sqlx.Rows
     var ok bool
@@ -441,18 +566,9 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
             return nil,errors.New("wrong type of sql.row")
         }
     }
-    tobeScanned := make(map[string]any, 0)
-    if _rows != nil {
-        err = _rows.MapScan(tobeScanned)
-    } else if _row != nil {
-        err = _row.MapScan(tobeScanned)
-    }
-    if err != nil && err != _sql.ErrNoRows {
-        return nil,err
-    } else if err != nil && err == _sql.ErrNoRows {
-        return nil,nil
-    }
-     isFilterEmpty := len(filter) == 0
+    
+    tobeScanned := make([]any,0)
+   isFilterEmpty := len(filter) == 0
     {{- range .Table.Columns }}
             {{- $objectProperty := ""}}
             {{- $tokens := split .Name "_"}}
@@ -460,57 +576,21 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
                 {{- $objectProperty = (print $objectProperty (title $element))}}
             {{- end}}
             if isFilterEmpty || filter["`{{.Name}}`"] {
-                var tmp string
-                if tobeScanned["{{.Name}}"] != nil {
-                    if convByte, ok := tobeScanned["{{.Name}}"].([]uint8); ok {
-                        tmp = string(convByte)
-                    } else {
-                        tmp = fmt.Sprintf("%v", tobeScanned["{{.Name}}"])
-                    }
-                    {{if  eq .Type "float32" }}
-                    if conv, err := strconv.ParseFloat(tmp, 32); err != nil {
-                        return nil, err
-                    } else {
-                    result.{{$objectProperty}} =  conv
-                    }
-                  {{else if  eq .Type "float64" }}
-                   if conv, err := strconv.ParseFloat(tmp, 64); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                 {{else if eq .Type "int" }}
-                    if conv, err := strconv.Atoi(tmp); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                  {{else if eq .Type "int32" }}
-                     if conv, err := strconv.ParseInt(tmp,10, 32); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                  {{else if eq .Type "int64" }}
-                      if conv, err := strconv.ParseInt(tmp,10, 64); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                {{else if eq .Type "bool"}}
-                   if conv, err := strconv.ParseBool(s); err != nil {
-                        return nil, err
-                    } else {
-                        result.{{$objectProperty}} =  conv
-                    }
-                {{else}}
-                    result.{{$objectProperty}} = tmp
-                 {{end}}  
-                } 
-                
-                
+                tobeScanned = append(tobeScanned, &scanned.{{$objectProperty}})
             }
     {{- end}}
+
+    
+    if _rows != nil {
+        err = _rows.Scan(tobeScanned...)
+    } else if _row != nil {
+        err = _row.Scan(tobeScanned...)
+    }
+    if err != nil && err != _sql.ErrNoRows {
+        return nil,err
+    } else if err != nil && err == _sql.ErrNoRows {
+        return nil,nil
+    }
 
     if len(trans) > 0 {
         var out any
@@ -529,5 +609,43 @@ func scan(rows any, filter map[string]bool, trans []transformer.Transformer) (*d
             }
         }
     }
+    result = scanned.CastToModel()
     return &result,nil
+}
+
+func (r *RawScan) CastToModel() db.Model {
+    var m db.Model
+     {{- range .Table.Columns }}
+        {{- $field := "" }}
+        {{- $objectProperty := ""}}
+        {{- $tokens := split .Name "_" }}
+        {{- range $index, $element := $tokens }}
+            {{- if eq $index 0 }}
+                {{- $field = (print $field $element)}}
+            {{- else }}
+                {{- $field = (print $field (title $element))}}
+            {{- end }}
+            {{- $objectProperty = (print $objectProperty (title $element))}}
+        {{- end }}
+        {{- if (eq .Type "bool")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Bool
+        {{- else if (eq .Type "string")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.String
+        {{- else if (eq .Type "int")}}
+            m.{{- $objectProperty}} = int(r.{{- $objectProperty}}.Int16)
+        {{- else if (eq .Type "int32")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Int32
+        {{- else if (eq .Type "int64")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Int64
+        {{- else if (eq .Type "float32")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Float32
+        {{- else if (eq .Type "float64")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Float64
+        {{- else if (eq .Type "[]byte")}}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.Byte
+        {{- else }}
+            m.{{- $objectProperty}} = r.{{- $objectProperty}}.String
+        {{- end}}
+    {{- end }}
+    return m
 }
