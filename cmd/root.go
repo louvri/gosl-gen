@@ -61,4 +61,19 @@ func init() {
 		},
 	}
 	rootCmd.AddCommand(versionCmd)
+
+	var initCmd = &cobra.Command{
+		Use:   "init",
+		Short: `gosl-gen init`,
+		Long:  `gosl-gen init`,
+		Run: func(cmd *cobra.Command, args []string) {
+			runner := process.New()
+			if err := runner.Initialize(cfg); err != nil {
+				fmt.Printf("gosl-gen init failed %v\n", err)
+			} else {
+				fmt.Println("gosl is initiated")
+			}
+		},
+	}
+	rootCmd.AddCommand(initCmd)
 }

@@ -37,41 +37,36 @@ type runner struct {
 	config map[string]any
 }
 
-func (r *runner) Initialize(path string) error {
-	fmt.Println("read config")
-	err := r.getConfig(path)
-	if err != nil {
-		return err
+func (r *runner) Initialize(path string) (err error) {
+	if path != "" {
+		fmt.Println("read config")
+		err = r.getConfig(path)
+		if err != nil {
+			return err
+		}
 	}
 	err = run("mkdir", "-p", "tmp")
 	if err != nil {
 		return err
 	}
-	err = run("cd", "tmp")
+	err = run("curl", "-L", "-o", "./tmp/gnorm.tar.gz", "https://github.com/gnormal/gnorm/releases/download/v1.1.1/gnorm_1.1.1_macOS-64bit.tar.gz")
 	if err != nil {
 		return err
 	}
-	err = run("curl", "-L", "-o", "gnorm.tar.gz", "https://github.com/gnormal/gnorm/releases/latest/download/v1.1.1/gnorm_1.1.1_macOS-64bit.tar.gz")
+	err = run("tar", "-xzf", "./tmp/gnorm.tar.gz", "-C", "./tmp")
 	if err != nil {
 		return err
 	}
-	err = run("tar", "-xzf", "gnorm.tar.gz")
+	err = run("chmod", "+x", "./tmp/gnorm")
 	if err != nil {
 		return err
 	}
-	err = run("chmod", "+x", "./gnorm")
-	if err != nil {
-		return err
-	}
-	err = run("mv", "./gnorm", "~/go/bin/gnorm")
+	homeDir, _ := os.UserHomeDir()
+	err = run("mv", "./tmp/gnorm", fmt.Sprintf("%s/go/bin", homeDir))
 	if err != nil {
 		return err
 	}
 	err = run("rm", "-rf", "./tmp")
-	if err != nil {
-		return err
-	}
-	err = run("cd", "..")
 	if err != nil {
 		return err
 	}
@@ -339,6 +334,7 @@ func (r *runner) getConfig(path string) error {
 func run(cli string, args ...string) error {
 
 	cmd := exec.Command(cli, args...)
+	fmt.Println("executing", cmd.String())
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	stdOut, err := cmd.StdoutPipe()
