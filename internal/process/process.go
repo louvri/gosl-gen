@@ -63,7 +63,7 @@ func (r *runner) Initialize(path string) error {
 	if err != nil {
 		return err
 	}
-	err = run("mv", "./gnorm", "~/go/bin/")
+	err = run("mv", "./gnorm", "~/go/bin/gnorm")
 	if err != nil {
 		return err
 	}
