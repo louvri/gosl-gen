@@ -43,7 +43,31 @@ func (r *runner) Initialize(path string) error {
 	if err != nil {
 		return err
 	}
-	err = run("go", "get", "gnorm.org/gnorm")
+	err = run("mkdir", "-p", "tmp")
+	if err != nil {
+		return err
+	}
+	err = run("cd", "tmp")
+	if err != nil {
+		return err
+	}
+	err = run("curl", "-L", "-o", "gnorm.tar.gz", "https://github.com/gnormal/gnorm/releases/download/v1.1.1/gnorm_1.1.1_macOS-64bit.tar.gz")
+	if err != nil {
+		return err
+	}
+	err = run("tar", "-xzf", "gnorm.tar.gz")
+	if err != nil {
+		return err
+	}
+	err = run("chmod", "+x", "./gnorm")
+	if err != nil {
+		return err
+	}
+	err = run("mv", "./gnorm", "~/go/bin/")
+	if err != nil {
+		return err
+	}
+	err = run("rm", "-rf", "./tmp")
 	if err != nil {
 		return err
 	}
