@@ -51,7 +51,7 @@ func (r *runner) Initialize(path string) error {
 	if err != nil {
 		return err
 	}
-	err = run("curl", "-L", "-o", "gnorm.tar.gz", "https://github.com/gnormal/gnorm/releases/download/v1.1.1/gnorm_1.1.1_macOS-64bit.tar.gz")
+	err = run("curl", "-L", "-o", "gnorm.tar.gz", "https://github.com/gnormal/gnorm/releases/latest/download/v1.1.1/gnorm_1.1.1_macOS-64bit.tar.gz")
 	if err != nil {
 		return err
 	}
@@ -68,6 +68,10 @@ func (r *runner) Initialize(path string) error {
 		return err
 	}
 	err = run("rm", "-rf", "./tmp")
+	if err != nil {
+		return err
+	}
+	err = run("cd", "..")
 	if err != nil {
 		return err
 	}
